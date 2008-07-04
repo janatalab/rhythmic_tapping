@@ -1,0 +1,19 @@
+disp = ensemble_init_data_struct;
+disp.vars = {'data' 'column_labels' 'column_formats'};
+dispCols = set_var_col_const(disp.vars);
+
+disp.data{dispCols.data} = {...
+    repmat(trialStartTime,size(behaviorIdxs)) ...
+    repmat(trialEndTime,size(behaviorIdxs)) ...
+    subBehaviorStartTimes(behaviorIdxs) ...
+    subBehaviorEndTimes(behaviorIdxs) ...
+    behaviorsThisSub.data{5}(behaviorIdxs)
+		   };
+
+
+disp.data{dispCols.column_labels} = {'trial_start_time' 'trial_end_time' ...
+		    'beh_start_time' 'beh_end_time' 'behavior'};
+
+disp.data{dispCols.column_formats} = {'%.1f' '%.1f' '%.1f' '%.1f' '%s'};
+
+ensemble_display_table(disp,[]);

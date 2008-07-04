@@ -1,0 +1,5 @@
+      'foot tapping,right', ...   % is this rhythmic or non-rhythmic?
+     'hand tapping,non-synchronized', ...  % rhythmic?
+      'hand tapping,non-synchronized,synchronized', ...  % ???, rhythmic ???
+      'hand tapping,right', ...  % rhythmic ???
+      'hand tapping,synchronized', ...  % rhythmic ???
