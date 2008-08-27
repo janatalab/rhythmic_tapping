@@ -12,11 +12,11 @@ globals = rhythmTap_globals;
 
 if(~exist('an','var'))
   load(fullfile(globals.paths.datapath,'rhythmTap_stimulus_rprofile_analysis_18July2007_00:41.mat'),'an');
+ 
 end
 
 %store form defs in a more easily accessed variable
 form_defs = globals.ensemble.form_defs;
-
 
 % Create an array of analysis structures
 %clear an;

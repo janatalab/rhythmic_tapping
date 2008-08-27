@@ -31,7 +31,8 @@ globals.ensemble.terminal_form = form_id_const.RHYTHMIC_TAPPING_EFFECTS;
 
 afs_project_root = '/afs/cmb/share/petrlab/rhythmic_tapping/v2';
 project_root = '/data2/rhythm/rhythmic_tapping_v2';check_dir(project_root);
-plot_root = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/plots';
+%plot_root = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/plots';
+plot_root = '/data2/rhythm/rhythmic_tapping_v2/plots';
 
 globals.paths.project_root = project_root;
 globals.paths.stim_recording_path = fullfile(project_root,'dp_stimuli');
@@ -208,7 +209,7 @@ globals.behaviors.indiv = {...
 
 
 globals.stimIPEMParams.glob.process = {'ani','rp'};
-globals.stimIPEMParams.glob.force_recalc = {};
+globals.stimIPEMParams.glob.force_recalc = {'rp'};
 globals.stimIPEMParams.glob.save_calc = {'ani','rp'};
 globals.stimIPEMParams.ani = ani_paramGroups;
 globals.stimIPEMParams.rp =  rp_paramGroups('param_group',...
