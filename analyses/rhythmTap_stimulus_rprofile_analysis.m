@@ -70,7 +70,7 @@ an{na}.params.getTrialsParams.plotTappingConditions = {'iso_tap'};
 an{na}.params.process = {'trialSig'};
 an{na}.params.stims.filt.exclude.any.stimulus_id = globals.ensemble.silence_stim_id;
 %an{na}.params.stims.filt.include.any.stimulus_id = [5886 6251 6371 6247 6250 3];
-an{na}.params.stims.filt.include.any.stimulus_id = 5410; %[8 5410 6403]; %[8];
+an{na}.params.stims.filt.include.any.stimulus_id = [5410 8 5410 6403]; %[8];
 an{na}.params.separatePlotFiles = 1;
 an{na}.params.nmat2aud.Fs = 44100;
 an{na}.params.nmat2aud.padStop = 2;
@@ -95,7 +95,7 @@ an{na}.params.plot.inputSigType = 'impulse';
 an{na}.params.plot.separatePages = 1;
 an{na}.params.separateStimIDPages = 1;
 an{na}.params.plot.savePlot = 1;
-an{na}.params.plot.plotFname = 'testing_beta_response.ps';
+an{na}.params.plot.plotFname = 'orig_beta_response.ps';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
 
 na=na+1;
@@ -145,6 +145,6 @@ an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metada
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [4];
+params.run_analyses = [2];
 an = ensemble_jobman(an,params);
 return
