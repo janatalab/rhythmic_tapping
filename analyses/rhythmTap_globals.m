@@ -208,8 +208,8 @@ globals.behaviors.indiv = {...
 
 
 
-globals.stimIPEMParams.glob.process = {'ani','ci','pp','toract','rp'};
-globals.stimIPEMParams.glob.force_recalc = {};
+globals.stimIPEMParams.glob.process = {'ani','rp'};
+globals.stimIPEMParams.glob.force_recalc = {'rp'};
 globals.stimIPEMParams.glob.save_calc = {'ani','rp'};
 globals.stimIPEMParams.ani = ani_paramGroups;
 globals.stimIPEMParams.rp =  rp_paramGroups('param_group',...
