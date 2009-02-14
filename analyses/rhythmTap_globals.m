@@ -5,15 +5,37 @@ function globals = rhythmTap_globals
 % Bring up the generic list of form name definitions
 dbstop if error
 
-form_name_defs;
+
+afs_project_root = '/afs/cmb/share/petrlab/rhythmic_tapping/v2';
+project_root = '/data2/rhythm/rhythmic_tapping_v2';check_dir(project_root);
+globals.paths.matlab_project_root = '~/svn/private/matlab/projects/rhythmic_tapping';
+globals.paths.project_root = project_root;
+%plot_root = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/plots';
+plot_root = '/data2/rhythm/rhythmic_tapping_v2/plots';
+globals.paths.stim_recording_path = fullfile(project_root,'dp_stimuli');
+globals.paths.resp_midi_path = fullfile(project_root,'dp_responses');
+globals.paths.figpath = fullfile(project_root, 'figures'); check_dir(globals.paths.figpath);
+globals.paths.logpath = fullfile(afs_project_root, 'logfiles'); check_dir(globals.paths.logpath);
+globals.paths.datapath = fullfile(project_root, 'project_data');
+globals.paths.resp_rp_path = fullfile(project_root,'project_data','resp_rp');
+globals.paths.plot_root = plot_root;
+globals.paths.local_plot_root = fullfile(project_root,'plots');
+globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp');
+globals.paths.stim_rp_plotPath = fullfile(plot_root,'stim_rp');
+  
+  
+globals.ensemble.expname = 'rhythmic_tapping_v2'; % Ensemble experiment name
+globals.ensemble.conn_id = 7;
+globals.ensemble.silence_stim_id = 6497;
+globals.ensemble.database='ensemble_main';
+globals.ensemble.host='atonal.ucdavis.edu';
+
+[form_id_const,form_name_id_const_map,form_name_list] = make_form_name_defs(globals);
+  
 globals.ensemble.form_defs.form_id_const = form_id_const;
 globals.ensemble.form_defs.form_name_id_const_map = form_name_id_const_map;
 globals.ensemble.form_defs.form_name_list = form_name_list;
 
-globals.ensemble.expname = 'rhythmic_tapping_v2'; % Ensemble experiment name
-globals.ensemble.conn_id = 7;
-
-globals.ensemble.silence_stim_id = 6497;
 
 globals.midi.validMidiNotes = [60 74];
 globals.midi.leftHandMidiNote = 60;
@@ -29,22 +51,6 @@ globals.ensemble.filt.exclude.any.subject_id = {'tmp_*', ...
 % Other experiment-wide information
 globals.ensemble.terminal_form = form_id_const.RHYTHMIC_TAPPING_EFFECTS;
 
-afs_project_root = '/afs/cmb/share/petrlab/rhythmic_tapping/v2';
-project_root = '/data2/rhythm/rhythmic_tapping_v2';check_dir(project_root);
-%plot_root = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/plots';
-plot_root = '/data2/rhythm/rhythmic_tapping_v2/plots';
-
-globals.paths.project_root = project_root;
-globals.paths.stim_recording_path = fullfile(project_root,'dp_stimuli');
-globals.paths.resp_midi_path = fullfile(project_root,'dp_responses');
-globals.paths.figpath = fullfile(project_root, 'figures'); check_dir(globals.paths.figpath);
-globals.paths.logpath = fullfile(afs_project_root, 'logfiles'); check_dir(globals.paths.logpath);
-globals.paths.datapath = fullfile(project_root, 'project_data');
-globals.paths.resp_rp_path = fullfile(project_root,'project_data','resp_rp');
-globals.paths.plot_root = plot_root;
-globals.paths.local_plot_root = fullfile(project_root,'plots');
-globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp');
-globals.paths.stim_rp_plotPath = fullfile(plot_root,'stim_rp');
 
 %useful question id maps
 groove_id_map = {'ENJOYED_MUSIC',207.01;...

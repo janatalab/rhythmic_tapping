@@ -21,7 +21,7 @@ if(ismember('calcMeans',params.process))
   meanEnergies.name = 'mean_energies_by_trial_and_subject';
   meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'tapping_stats' 'stimulus_category' ...
 		    'artist' 'song_name' 'meanEnergy' 'stdEnergy' ...
-		    'resonFreqs' 'peakFreqs','peakWidths'};
+		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths'};
 
   meCols = set_var_col_const(meanEnergies.vars);
   meIdx = 1;
@@ -140,15 +140,25 @@ for iSess = 1:length(sessIDs)
 	resonFreqs = thisRP.data{rpCols.resonatorFreqs};
 	resonEnergy = thisRP.data{rpCols.resonatorEnergy};
 	
-	meanResonEnergy = mean(resonEnergy,2);
-	stdResonEnergy = std(resonEnergy,[],2);
-	
+	%meanResonEnergy = mean(resonEnergy,2);
+	%stdResonEnergy = std(resonEnergy,[],2);
+	meanResonEnergy = thisRP.data{rpCols.meanResonatorEnergy};
+	stdResonEnergy  = thisRP.data{rpCols.stdResonatorEnergy};
 	if(size(meanResonEnergy,2) > size(meanResonEnergy,1))
 	  meanResonEnergy = meanResonEnergy';
 	end
+	if(size(stdResonEnergy,2) > size(stdResonEnergy,1))
+	  stdResonEnergy = stdResonEnergy';
+	end	
 	if(size(resonFreqs,2) > size(resonFreqs,1))
 	  resonFreqs = resonFreqs';
 	end
+	
+	peakInfo = thisRP.data{rpCols.peakInfo};
+	peakInfoCols = set_var_col_const(peakInfo.vars);
+	peakFreqs = peakInfo.data{peakInfoCols.peakFreq};
+	normPeakFreqs = peakInfo.data{peakInfoCols.normPeakFreq};
+	peakWidths = peakInfo.data{peakInfoCols.width};
 	
 	peakIdxs = find_peaks(meanResonEnergy,params.peakFinder);
 	peakFreqs = resonFreqs(peakIdxs);
@@ -166,6 +176,7 @@ for iSess = 1:length(sessIDs)
 	meanEnergies.data{meCols.meanEnergy}{meIdx,1} = meanResonEnergy;
 	meanEnergies.data{meCols.stdEnergy}{meIdx,1} = stdResonEnergy;
 	meanEnergies.data{meCols.resonFreqs}{meIdx,1} = resonFreqs;
+	meanEnergies.data{meCols.normPeakFreqs}{meIdx,1} = normPeakFreqs;
 	meanEnergies.data{meCols.peakFreqs}{meIdx,1} = peakFreqs;
 	meanEnergies.data{meCols.peakWidths}{meIdx,1} = peakWidths;
 	meIdx = meIdx + 1;

@@ -5,7 +5,7 @@ dbstop if error
 
 if (~exist('an'))
 load (fullfile(globals.paths.datapath,...
-	       'rhythmTap_response_rprofile_analysis_16May2008_10:52.mat'));
+	       'rhythmTap_response_rprofile_analysis_21May2008_11:21.mat'));
 
 %for two subjects used in original paper submission
 %load (fullfile(globals.paths.datapath,...
@@ -171,6 +171,6 @@ an{na}.params.filename = 'betaGain_99filt';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [6];
+params.run_analyses = [5];
 an = ensemble_jobman(an,params);
 return
