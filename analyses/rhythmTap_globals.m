@@ -8,7 +8,9 @@ dbstop if error
 
 afs_project_root = '/afs/cmb/share/petrlab/rhythmic_tapping/v2';
 project_root = '/data2/rhythm/rhythmic_tapping_v2';check_dir(project_root);
-globals.paths.matlab_project_root = '~/svn/private/matlab/projects/rhythmic_tapping';
+globals.paths.matlab_project_root = ...
+    '~/svn/private/matlab/projects/rhythmic_tapping';
+
 globals.paths.project_root = project_root;
 %plot_root = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/plots';
 plot_root = '/data2/rhythm/rhythmic_tapping_v2/plots';

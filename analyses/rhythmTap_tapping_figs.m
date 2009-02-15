@@ -3,12 +3,24 @@
 % Generates figures associated with analyses of movement data
 %
 
-LOAD_DATA = 1;
+% 02/14/09 PJ - updated for SMPC09 abstract analyses
+
+LOAD_DATA = 0;
 RUN_ANALYSES = 0;
 SAVE_ANALYSES = 0;
-GENERATE_FIGS = 0;
+GENERATE_FIGS = 1;
 
 globals = rhythmTap_globals;
+
+% List of analysis files we need to load
+stim_rpProfile_fstub = ...
+    'rhythmTap_stimulus_rprofile_analysis_27July2007_11:30.mat';
+    %    'rhythmTap_stimulus_rprofile_analysis_18July2007_00:41.mat';
+
+subject_grooveEnum_fstub = ...
+    'rhythmTap_grooveEnumByTapStats_17July2007_14:15.mat';
+subject_rpProfile_fstub = 'meanEnergies_peakWidths_byTrialSub.mat';
+'meanEnergies_byTrialSub.mat'
 
 analysis_types.subject = {'nanmean', ... % 
       'nanstd', ... % 
@@ -18,10 +30,11 @@ analysis_types.subject = {'nanmean', ... %
 analysis_types.group = {'nanmean','nanstd','nsub'};
 
 vars2analyze = {'tapping_var_about_peak','rp_entropy'};
+vars2analyze = {'numPeaks'};
 
 if LOAD_DATA
   % Load tapping data and responses to post-stim questions
-  datafstub = 'rhythmTap_grooveEnumByTapStats_17July2007_14:15.mat';
+  datafstub = subject_grooveEnum_fstub;
   datafname = fullfile(globals.paths.datapath, datafstub);
 
   fprintf('Loading data from: %s\n', datafname);
@@ -39,7 +52,7 @@ if LOAD_DATA
   
   % Response data with response profiles
   matfname = fullfile(globals.paths.datapath, 'resp_rp', ...
-      'meanEnergies_byTrialSub.mat');
+      subject_rpProfile_fstub);
   fprintf('Loading data from: %s\n',matfname);
   load(matfname,'meanEnergies');
   rp_ds = meanEnergies;
@@ -96,8 +109,7 @@ if LOAD_DATA
   %
   % Load the stimulus response profiles
   %
-  datafstub = 'rhythmTap_stimulus_rprofile_analysis_18July2007_00:41.mat';
-  datafname = fullfile(globals.paths.datapath, datafstub);
+  datafname = fullfile(globals.paths.datapath, stim_rpProfile_fstub);
   fprintf('Loading stimulus data from: %s\n', datafname);
   load(datafname,'an')
   stim_st = an{5}.results;
@@ -114,6 +126,14 @@ if ~ismember(curr_var, fieldnames(respcols))
       rp_entropy(resp_st.data{respcols.meanEnergy});
 end
 
+curr_var = 'numPeaks';
+if ~ismember(curr_var, fieldnames(respcols))
+  resp_st.vars{end+1} = curr_var;
+  respcols = set_var_col_const(resp_st.vars);
+  resp_st.data{respcols.(curr_var)} = ...
+      cellfun('length',resp_st.data{respcols.peakFreqs});
+end
+    
 % Calculate any other desired measures on the stimulus data
 curr_var = 'rp_entropy';
 if ~ismember(curr_var, fieldnames(stimcols))
@@ -121,6 +141,14 @@ if ~ismember(curr_var, fieldnames(stimcols))
   stimcols = set_var_col_const(stim_st.vars);
   stim_st.data{stimcols.(curr_var)} = ...
       rp_entropy(stim_st.data{stimcols.meanEnergy});
+end
+
+curr_var = 'numPeaks';
+if ~ismember(curr_var, fieldnames(stimcols))
+  stim_st.vars{end+1} = curr_var;
+  stimcols = set_var_col_const(stim_st.vars);
+  stim_st.data{stimcols.(curr_var)} = ...
+      cellfun('length',stim_st.data{stimcols.peakFreqs});
 end
 
 
@@ -277,13 +305,17 @@ if GENERATE_FIGS
 %  poststim_question_fig;
   
   measures2plot = {'tapping_var_about_peak','rp_entropy'};
+  measures2plot = {'numPeaks'};
   for ivar = 1:length(measures2plot)
 
-%    subavg_tapping_corr_tap_question_fig;
+    %subavg_tapping_corr_tap_question_fig;
     
     % Individual trial correlations
     figure(7), clf
-    indiv_trial_perf_x_quest_corr_fig;
+    %indiv_trial_perf_x_quest_corr_fig;
+    
+    % Variable means as a function of the category and condition
+    avg_by_cat_cond
     
   end % for ivar =
 end % if GENERATE_FIGS
