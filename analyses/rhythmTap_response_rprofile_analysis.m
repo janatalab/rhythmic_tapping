@@ -162,15 +162,17 @@ an{na}.params.peakFinder.thresh = 0.25;
 an{na}.params.tapping_cond = {{'iso_tap'},{'free_form_tap'}};
 an{na}.params.labels = {'iso tap','free form tap'};
 an{na}.params.ipem = globals.stimIPEMParams;
-an{na}.params.plot.lineSpec = {'b-','r-','k-'};
+%an{na}.params.plot.lineSpec = {'b-','r-','k-'};
+an{na}.params.plot.plotStyle = 'fill';
+an{na}.params.plot.lineSpec = {[1 0 1],[0 1 0],[0 0 0]};
 an{na}.params.plot.plotStd  = [1 1 0];
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.savePlot = 1;
 an{na}.params.savePath = fullfile(globals.paths.resp_rp_plotPath,'mmp_resp_vs_stim');
-an{na}.params.filename = 'betaGain_99filt';
+an{na}.params.filename = '14Feb2009_12:04p';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [7];
 an = ensemble_jobman(an,params);
 return

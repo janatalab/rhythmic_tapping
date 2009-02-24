@@ -125,7 +125,7 @@ for iStim = 1:length(stimIDs)
     
     peakInfo = thisStimRP.data{thisStimRPCols.peakInfo};
     peakInfoCols = set_var_col_const(peakInfo.vars);
-    peakFreqs = peakInfo.data{peakInfoCols.peak};
+    peakFreqs = peakInfo.data{peakInfoCols.peakFreq};
     
     plotData.data{pdCols.meanResonEnergy}{end+1,1} = stimMeanEnergy;
     plotData.data{pdCols.resonatorFreqs}{end+1,1} = resonFreqs;
