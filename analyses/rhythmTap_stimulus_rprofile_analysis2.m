@@ -152,6 +152,6 @@ an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metada
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [];
+params.run_analyses = [4];
 an = ensemble_jobman(an,params);
 return

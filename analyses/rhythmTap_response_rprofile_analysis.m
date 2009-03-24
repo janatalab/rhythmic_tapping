@@ -25,7 +25,7 @@ form_defs = globals.ensemble.form_defs;
 %clear an;
 na = 0;
 
-na=na+1;
+na=na+1; %1
 an{na}.name = 'ensemble_load_expinfo';
 an{na}.fun  = @ensemble_load_expinfo;
 an{na}.params.ensemble.experiment_title='rhythmic_tapping_v2';
@@ -36,7 +36,7 @@ an{na}.params.filt = globals.ensemble.filt;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 
 %STIM/RESP PARSING
-na=na+1;
+na=na+1; %2
 an{na}.name = 'session_x_trial_info';
 an{na}.fun  = @ensemble_session_trial_info;
 an{na}.params.verbose = 1;
@@ -59,7 +59,7 @@ an{na}.params.parse_midi_resps.path = globals.paths.resp_midi_path;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars', ...
 			  'response_data'),struct('name','ensemble_load_expinfo','vars','session_info')};
 
-na=na+1;
+na=na+1; %3
 an{na}.name = 'get_trial_info';
 an{na}.fun = @getRhythmTapTrialInfo;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
@@ -75,7 +75,7 @@ an{na}.params.tapping_stats.stdev.nBins = 6;
 an{na}.requires = {struct('name','session_x_trial_info'),...
 		  struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};
 
-na=na+1;
+na=na+1; %4
 an{na}.name = 'plot_tappingStats_groupByStimID';
 an{na}.fun = @plot_tappingStatsArray;
 an{na}.params.hand = 'both';
@@ -89,11 +89,11 @@ an{na}.params.savePlots = 1;
 an{na}.params.plotPath = fullfile(globals.paths.plot_root,'ioi_hist_summed_by_stim_id');
 an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_groupBy_stimulus_id')};
 
-na=na+1;
+na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
 an{na}.params.process = {'calcRP','calcMeans'};
-an{na}.params.savePath = globals.paths.resp_rp_path;
+an{na}.params.savePath = '/data2/rhythm/rhythm_profiler/temp'; %globals.paths.resp_rp_path;
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
 an{na}.params.nmat2aud.padStop = 0;
@@ -112,7 +112,7 @@ an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_by_trial'
 		   struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};
 
 
-na=na+1;
+na=na+1; %6
 an{na}.name = 'plot_resp_rhythm_profile';
 an{na}.fun = @plot_resp_rhythm_profile;
 an{na} = rmfield(an{na},'params');
@@ -145,13 +145,13 @@ an{na}.params.plot.color = 0;
 an{na}.params.plot.separatePages = 0;
 an{na}.params.plot.savePlot = 1;
 an{na}.params.plot.savePath = ...
-    fullfile(globals.paths.resp_rp_plotPath,'all_subs_by_stimulus','bw');
+    fullfile(globals.paths.resp_rp_plotPath,'all_subs_by_stimulus');
 an{na}.params.plot.timeTickRes = 2.0;
 an{na}.params.plot.xminortick = 'off';
 an{na}.params.plot.numResonTicks = 8;
 an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_by_trial'),struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};
 
-na=na+1;
+na=na+1; %7
 an{na}.name = 'plot_resp_meanRhythmProfile_byStimID_v2';
 an{na}.fun = @plot_resp_meanRhythmProfile_byStimID_v2;
 an{na}.params.stimAnalysisMatFile = fullfile(globals.paths.datapath,'rhythmTap_stimulus_rprofile_analysis_27_11:30.mat');
@@ -173,6 +173,6 @@ an{na}.params.filename = '14Feb2009_12:04p';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [7];
+params.run_analyses = [5];
 an = ensemble_jobman(an,params);
 return
