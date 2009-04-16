@@ -78,6 +78,7 @@ an{na}.params.nmat2aud.Fs = 44100;
 an{na}.params.nmat2aud.padStop = 2;
 an{na}.params.nmat2aud.ioiThresh = globals.midi.ioiThresh;
 an{na}.params.ipem = globals.stimIPEMParams;
+%an{na}.params.ipem.glob.force_recalc = {};
 an{na}.params.plot.freqLegend = 1;
 an{na}.params.plot.legendParams.minHz = 1;
 an{na}.params.plot.legendParams.maxHz = 5;
@@ -91,7 +92,7 @@ an{na}.params.plot.timeTickRes = 2.0;
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.plot.fig.rectPlotWidth = 0.48;
 an{na}.params.plot.peakFinder = an{2}.params.rp.resonatorBank.peakFinder;
-an{na}.params.plot.perform = {'resonEnergy','meanEnergy','stdEnergy','findPeaks','showInput','ratioProb'};
+an{na}.params.plot.perform = {'plotBandOutputs','resonEnergy','meanEnergy','stdEnergy','findPeaks','showInput','ratioProb'};
 
 an{na}.params.plot.inputSigType = 'impulse';
 an{na}.params.plot.separatePages = 1;
@@ -147,6 +148,6 @@ an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metada
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [2];
+params.run_analyses = [4];
 an = ensemble_jobman(an,params);
 return
