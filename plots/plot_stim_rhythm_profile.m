@@ -46,21 +46,23 @@ stimAttMetaData = inData{2};
 stimAttMetaDataCols = set_var_col_const(stimAttMetaData.vars);
 stimAttMetaData = ensemble_filter(stimAttMetaData,params.stimAttributes.filt);
 
-sessTrialInfo = inData{3};
-sessTrialInfoCols = set_var_col_const(sessTrialInfo.vars);
+if(isfield(params,'process') && ismember('trialSig',params.process))
+  sessTrialInfo = inData{3};
+  sessTrialInfoCols = set_var_col_const(sessTrialInfo.vars);
 
-%make sure we have trial info (tapping task and stimulus category
-%info) for the session/trial struct. If not, obtain the info
-trialVars =  sessTrialInfo.data{sessTrialInfoCols.trial_info}{1}.vars;
-if(~ismember('stimulus_category',trialVars) | ~ismember('tapping_condition',trialVars))
-  params.sessTrialInfo.ensemble = params.ensemble;
-  grtData{1} = sessTrialInfo;
-  grtData{2} = stimMetaData;
-  tInfo = getRhythmTapTrialInfo(grtData,params.sessTrialInfo);
-  tInfoCols = set_var_col_const(tInfo.vars);
-  %replace sessTrialInfo with version populated with stim cat. and
-  %tapping cond.
-  sessTrialInfo = tInfo.data{tInfoCols.tappingStats_by_trial};
+  %make sure we have trial info (tapping task and stimulus category
+  %info) for the session/trial struct. If not, obtain the info
+  trialVars =  sessTrialInfo.data{sessTrialInfoCols.trial_info}{1}.vars;
+  if(~ismember('stimulus_category',trialVars) | ~ismember('tapping_condition',trialVars))
+    params.sessTrialInfo.ensemble = params.ensemble;
+    grtData{1} = sessTrialInfo;
+    grtData{2} = stimMetaData;
+    tInfo = getRhythmTapTrialInfo(grtData,params.sessTrialInfo);
+    tInfoCols = set_var_col_const(tInfo.vars);
+    %replace sessTrialInfo with version populated with stim cat. and
+    %tapping cond.
+    sessTrialInfo = tInfo.data{tInfoCols.tappingStats_by_trial};
+  end
 end
 
 nStims = length(stimMetaData.data{stimMetaDataCols.stimulus_id});
