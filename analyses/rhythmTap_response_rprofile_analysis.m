@@ -93,7 +93,7 @@ na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
 an{na}.params.process = {'calcRP','calcMeans'};
-an{na}.params.savePath = '/data2/rhythm/rhythm_profiler/temp'; %globals.paths.resp_rp_path;
+an{na}.params.savePath = globals.paths.resp_rp_path;
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
 an{na}.params.nmat2aud.padStop = 0;
@@ -101,12 +101,11 @@ an{na}.params.nmat2aud.ioiThresh = globals.midi.ioiThresh;
 an{na}.params.nmat2aud.extractNotes = globals.midi.validMidiNotes;
 an{na}.params.nmat2aud.scaleByVelocity = 1;
 an{na}.params.peakFinder.thresh = 0.25;
-an{na}.params.ipem_proc.glob.process = {'rp'};
-an{na}.params.ipem_proc.glob.force_recalc = {'rp'};
-an{na}.params.ipem_proc.rp = rp_paramGroups('param_group',...
-				    'reson_filterQSpacing_periodBasedDecay',...
-				    'input_type','aud','gain_type','beta_distribution',...
-				    'perform_mulawCompression',0);
+an{na}.params.ipem_proc = globals.respIPEMParams;
+%param for running coherence calc
+an{na}.params.ipem_proc.rp.perform.calc = 1;
+an{na}.params.ipem_proc.rp.perform.calcTemporalExpect = 1;
+an{na}.params.ipem_proc.rp.perform.calcPhaseCoherence = 1;
 an{na}.params.storeIpemProc = {'rp'};
 an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_by_trial'),...
 		   struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};

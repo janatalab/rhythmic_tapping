@@ -140,8 +140,6 @@ for iSess = 1:length(sessIDs)
 	resonFreqs = thisRP.data{rpCols.resonatorFreqs};
 	resonEnergy = thisRP.data{rpCols.resonatorEnergy};
 	
-	%meanResonEnergy = mean(resonEnergy,2);
-	%stdResonEnergy = std(resonEnergy,[],2);
 	meanResonEnergy = thisRP.data{rpCols.meanResonatorEnergy};
 	stdResonEnergy  = thisRP.data{rpCols.stdResonatorEnergy};
 	if(size(meanResonEnergy,2) > size(meanResonEnergy,1))
@@ -188,7 +186,6 @@ for iSess = 1:length(sessIDs)
   end
 
 end
-
 
 if(ismember('calcMeans',params.process) && isfield(params,'savePath') ...
    && params.saveCalc)

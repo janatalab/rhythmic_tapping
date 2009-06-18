@@ -5,8 +5,8 @@
 
 % 02/14/09 PJ - updated for SMPC09 abstract analyses
 
-LOAD_DATA = 0;
-RUN_ANALYSES = 0;
+LOAD_DATA = 1;
+RUN_ANALYSES = 1;
 SAVE_ANALYSES = 0;
 GENERATE_FIGS = 1;
 
@@ -315,7 +315,7 @@ if GENERATE_FIGS
     %indiv_trial_perf_x_quest_corr_fig;
     
     % Variable means as a function of the category and condition
-    avg_by_cat_cond
+    %avg_by_cat_cond
     
   end % for ivar =
 end % if GENERATE_FIGS

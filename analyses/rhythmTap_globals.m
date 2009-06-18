@@ -19,10 +19,10 @@ globals.paths.resp_midi_path = fullfile(project_root,'dp_responses');
 globals.paths.figpath = fullfile(project_root, 'figures'); check_dir(globals.paths.figpath);
 globals.paths.logpath = fullfile(afs_project_root, 'logfiles'); check_dir(globals.paths.logpath);
 globals.paths.datapath = fullfile(project_root, 'project_data');
-globals.paths.resp_rp_path = fullfile(project_root,'project_data','resp_rp');
+globals.paths.resp_rp_path = fullfile(globals.paths.datapath,'resp_rp2');
 globals.paths.plot_root = plot_root;
 globals.paths.local_plot_root = fullfile(project_root,'plots');
-globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp');
+globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp2');
 globals.paths.stim_rp_plotPath = fullfile(plot_root,'stim_rp');
   
   
@@ -220,16 +220,12 @@ globals.stimIPEMParams.glob.process = {'ani','rp'};
 globals.stimIPEMParams.glob.force_recalc = {'rp'};
 globals.stimIPEMParams.glob.save_calc = {'ani','rp'};
 globals.stimIPEMParams.ani = ani_paramGroups;
-globals.stimIPEMParams.rp =  rp_paramGroups('param_group',...
+globals.stimIPEMParams.rp =  rp_paramGroups_v2('param_group',...
 				   'reson_filterQSpacing_periodBasedDecay',...
-				   'input_type','ani','gain_type','beta_distribution',...
-				   'perform_mulawCompression',0);
+				   'input_type','ani','gain_type','beta_distribution');
 
-
-globals.respIPEMParams = globals.stimIPEMParams;
 globals.respIPEMParams.glob.process = {'rp'};
 globals.respIPEMParams.glob.save_calc = {'rp'};
-globals.respIPEMParams.rp = rp_paramGroups('param_group',...
+globals.respIPEMParams.rp = rp_paramGroups_v2('param_group',...
 				   'reson_filterQSpacing_periodBasedDecay',...
-				   'input_type','aud','gain_type','beta_distribution',...
-				   'perform_mulawCompression',0);
+				   'input_type','aud','gain_type','beta_distribution');
