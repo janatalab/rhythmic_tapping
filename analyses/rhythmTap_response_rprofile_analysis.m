@@ -105,6 +105,7 @@ an{na}.params.ipem_proc = globals.respIPEMParams;
 %param for running coherence calc
 an{na}.params.ipem_proc.rp.perform.calc = 1;
 an{na}.params.ipem_proc.rp.perform.calcTemporalExpect = 1;
+an{na}.params.ipem_proc.rp.perform.calcVonMises = 1;
 an{na}.params.ipem_proc.rp.perform.calcPhaseCoherence = 1;
 an{na}.params.storeIpemProc = {'rp'};
 an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_by_trial'),...
