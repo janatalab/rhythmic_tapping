@@ -21,7 +21,7 @@ if(ismember('calcMeans',params.process))
   meanEnergies.name = 'mean_energies_by_trial_and_subject';
   meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'tapping_stats' 'stimulus_category' ...
 		    'artist' 'song_name' 'meanEnergy' 'stdEnergy' ...
-		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths'};
+		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths','meanVMPrediction','meanVMViolation','meanVMTimingDev','varVMPrediction','varVMViolation','varVMTimingDev','meanCoherence','varCoherence'};
 
   meCols = set_var_col_const(meanEnergies.vars);
   meIdx = 1;
@@ -132,6 +132,17 @@ for iSess = 1:length(sessIDs)
       load(filepath);
     end
     
+    %if params.getTappingStats was set, process it here
+    if(ismember('recalcTappingStats',params.process))
+      midiInfo = thisTrialStruct.data{thisTrialStructCols.midi_resp}{1};
+      midiInfoCols = set_var_col_const(midiInfo.vars);
+      tappingStatsParams = params.tapping_stats;
+      tappingStatsParams = params.tapping_stats;
+      thisTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
+      thisTrialStruct.data{thisTrialStructCols.tapping_stats}{1} = thisTapStats;
+    end
+    
+    
     if(ismember('calcMeans',params.process))
      
       thisRP = thisTrialStruct.data{thisTrialStructCols.rp}{1};
@@ -163,6 +174,27 @@ for iSess = 1:length(sessIDs)
 	peakWidths = get_rp_peakWidths('rpEnergy',meanResonEnergy,...
 						  'peakFreqs',peakFreqs,...
 						  'resonFreqs',resonFreqs);
+	if(isfield(rpCols,'coherence'))
+	  coherence = thisRP.data{rpCols.coherence};
+	  coherenceCols = set_var_col_const(coherence.vars);
+	  meanEnergies.data{meCols.meanCoherence}(meIdx,1) = nanmean(coherence.data{coherenceCols.cohPerPeakPerBand}{1});
+	  meanEnergies.data{meCols.varCoherence}(meIdx,1) = nanstd(coherence.data{coherenceCols.cohPerPeakPerBand}{1}).^2;
+	end
+	  
+	if(isfield(rpCols,'vmExpect'))
+	  vmData = thisRP.data{rpCols.vmExpect};
+	  vmDataCols = set_var_col_const(vmData.vars);
+	  vmPredictionPerOnset = vmData.data{vmDataCols.vmPredictionPerOnset};
+	  vmViolationPerOnset = vmData.data{vmDataCols.vmViolationPerOnset};
+	  vmTimingDev = vmData.data{vmDataCols.vmTimingDev};
+	  meanEnergies.data{meCols.meanVMPrediction}(meIdx,1) = nanmean(vmPredictionPerOnset{1});
+	  meanEnergies.data{meCols.meanVMViolation}(meIdx,1) = nanmean(vmViolationPerOnset{1});
+	  meanEnergies.data{meCols.meanVMTimingDev}(meIdx,1) = nanmean(vmTimingDev{1});
+	  meanEnergies.data{meCols.varVMPrediction}(meIdx,1) = nanstd(vmPredictionPerOnset{1}).^2;
+	  meanEnergies.data{meCols.varVMViolation}(meIdx,1) = nanstd(vmViolationPerOnset{1}).^2;
+	  meanEnergies.data{meCols.varVMTimingDev}(meIdx,1) = nanstd(vmTimingDev{1}).^2;
+	end
+		
 	meanEnergies.data{meCols.subject_id}{meIdx,1} = thisSubjectID;
 	meanEnergies.data{meCols.stimulus_id}(meIdx,1) = thisStimulusID;
 	meanEnergies.data{meCols.trial_order}(meIdx,1) = iTrial;
@@ -177,6 +209,7 @@ for iSess = 1:length(sessIDs)
 	meanEnergies.data{meCols.normPeakFreqs}{meIdx,1} = normPeakFreqs;
 	meanEnergies.data{meCols.peakFreqs}{meIdx,1} = peakFreqs;
 	meanEnergies.data{meCols.peakWidths}{meIdx,1} = peakWidths;
+
 	meIdx = meIdx + 1;
 	
       end
@@ -189,8 +222,8 @@ end
 
 if(ismember('calcMeans',params.process) && isfield(params,'savePath') ...
    && params.saveCalc)
-  meanEnergyPath = fullfile(params.savePath,'meanEnergies_peakWidths_byTrialSub.mat');
-  save(meanEnergyPath,'meanEnergies');
+  meanEnergyPath = fullfile(params.savePath,'meanEnergies_peakWidths_byTrialSub_normIOI.mat');
+  save(meanEnergyPath,'meanEnergies','params');
 end
 
 if(ismember('calcMeans',params.process))

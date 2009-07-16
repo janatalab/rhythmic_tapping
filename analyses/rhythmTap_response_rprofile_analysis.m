@@ -65,11 +65,12 @@ an{na}.fun = @getRhythmTapTrialInfo;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.params.summaryByTrialCond = {}; %{'iso_tap'}; %set this to obtain summary stats bystim ID
 an{na}.params.getTappingStats = 1;
-an{na}.params.tapping_stats.midi = globals.midi;
-an{na}.params.tapping_stats.normalizeByPeakIOI = 0;
-an{na}.params.tapping_stats.ioiMinThresh = 0.050;
-an{na}.params.tapping_stats.ioiHistBinLim = [0 3];
-an{na}.params.tapping_stats.ioiHistBinSize = 0.05;
+an{na}.params.tapping_stats = globals.tapping_stats;
+%an{na}.params.tapping_stats.midi = globals.midi;
+%an{na}.params.tapping_stats.normalizeByPeakIOI = 1;
+%an{na}.params.tapping_stats.ioiMinThresh = 0.050;
+%an{na}.params.tapping_stats.ioiHistBinLim = [0 3];
+%an{na}.params.tapping_stats.ioiHistBinSize = 0.05;
 %an{na}.params.tapping_stats.stdev.range = [0.75 1.25];
 an{na}.params.tapping_stats.stdev.nBins = 6;
 an{na}.requires = {struct('name','session_x_trial_info'),...
@@ -92,7 +93,7 @@ an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_groupBy_s
 na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
-an{na}.params.process = {'calcRP','calcMeans'};
+an{na}.params.process = {'loadRP','calcMeans','recalcTappingStats'};
 an{na}.params.savePath = globals.paths.resp_rp_path;
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
@@ -100,6 +101,7 @@ an{na}.params.nmat2aud.padStop = 0;
 an{na}.params.nmat2aud.ioiThresh = globals.midi.ioiThresh;
 an{na}.params.nmat2aud.extractNotes = globals.midi.validMidiNotes;
 an{na}.params.nmat2aud.scaleByVelocity = 1;
+an{na}.params.tapping_stats = globals.tapping_stats;
 an{na}.params.peakFinder.thresh = 0.25;
 an{na}.params.ipem_proc = globals.respIPEMParams;
 %param for running coherence calc
@@ -110,7 +112,6 @@ an{na}.params.ipem_proc.rp.perform.calcPhaseCoherence = 1;
 an{na}.params.storeIpemProc = {'rp'};
 an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_by_trial'),...
 		   struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};
-
 
 na=na+1; %6
 an{na}.name = 'plot_resp_rhythm_profile';
@@ -158,7 +159,9 @@ an{na}.params.stimAnalysisMatFile = fullfile(globals.paths.datapath,'rhythmTap_s
 an{na}.params.stimAnMeanRPJob = 'get_stim_meanRhythmProfiles';
 an{na}.params.rpPath = globals.paths.resp_rp_path;
 %an{na}.params.filename = 'meanEnergies_byTrialSub.mat';
-an{na}.params.peakFinder.thresh = 0.25;
+%an{na}.params.peakFinder.thresh = 0.25;
+an{na}.params.peakFinder = globals.respIPEMParams.rp.resonatorBank.peakFinder;
+an{na}.params.numResonTicks = 8;
 an{na}.params.tapping_cond = {{'iso_tap'},{'free_form_tap'}};
 an{na}.params.labels = {'iso tap','free form tap'};
 an{na}.params.ipem = globals.stimIPEMParams;
@@ -169,10 +172,10 @@ an{na}.params.plot.plotStd  = [1 1 0];
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.savePlot = 1;
 an{na}.params.savePath = fullfile(globals.paths.resp_rp_plotPath,'mmp_resp_vs_stim');
-an{na}.params.filename = '14Feb2009_12:04p';
+an{na}.params.filename = 'mpp_resp_vs_stim_15Jul2009_6p';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [7];
 an = ensemble_jobman(an,params);
 return

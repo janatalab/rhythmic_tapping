@@ -35,15 +35,17 @@ setParams.plot = params.plot;
 for iStim = 1:length(stimIDs)
 
   thisStimulusID = stimIDs(iStim);
-
+  clear rpList;
   clear tmpFilt;
   tmpFilt.include.all.stimulus_id = thisStimulusID;
   meList = ensemble_filter(meanEnergies,tmpFilt);
   thisSongName = meList.data{meCols.song_name}{1};
   thisArtist   = meList.data{meCols.artist}{1};
   thisStimCat  = meList.data{meCols.stimulus_category}{1};
+ 
   
-  figParams.axLocs = {'rectPlot_bottom','rectPlot_top'};
+  figParams.axLocs = {'rectPlot_bottom_multi','rectPlot_top'};
+  figParams.numMulti.bottom = 3;
   figParams.plotTitle = [sprintf('Free Form vs. Isochronous\n')...
 		    sprintf('Response Mean Rhythm Profile\n')...
 		    sprintf('Stimulus ID %d, %s\n',thisStimulusID',thisStimCat)];
@@ -92,16 +94,16 @@ for iStim = 1:length(stimIDs)
     
     peakWidths = get_rp_peakWidths('rpEnergy',meanMEnergy,'resonFreqs',resonFreqs,'peakFreqs',peakFreqs);
     
-        
-    plotData.data{pdCols.meanResonEnergy}{end+1,1} = meanMEnergy;
-    plotData.data{pdCols.stdResonEnergy}{end+1,1} = stdMEnergy;
-    plotData.data{pdCols.resonatorFreqs}{end+1,1} = resonFreqs;
-    plotData.data{pdCols.peakResonFreqs}{end+1,1} = peakFreqs;
-    plotData.data{pdCols.peakWidths}{end+1,1} = peakWidths;
-        
-    params.plot.legendLabels{end+1} = [params.labels{iTapCond} ...
-		    sprintf(' (N=%d)',nSubs)];
     
+    rpList{iTapCond} = init_rp_struct;
+    rpCols = set_var_col_const(rpList{iTapCond}.vars);
+    rpList{iTapCond}.data{rpCols.meanResonatorEnergy} = meanMEnergy;
+    rpList{iTapCond}.data{rpCols.stdResonatorEnergy} = stdMEnergy;
+    rpList{iTapCond}.data{rpCols.resonatorFreqs} = resonFreqs;
+    
+    params.plot.legendLabels{end+1} = [params.labels{iTapCond} ...
+    		    sprintf(' (N=%d)',nSubs)];
+ 
     maxEnergy = max(meanMEnergy);
     maxThisPlot = max(maxEnergy,maxThisPlot);
     
@@ -127,23 +129,35 @@ for iStim = 1:length(stimIDs)
     peakInfoCols = set_var_col_const(peakInfo.vars);
     peakFreqs = peakInfo.data{peakInfoCols.peakFreq};
     
-    plotData.data{pdCols.meanResonEnergy}{end+1,1} = stimMeanEnergy;
-    plotData.data{pdCols.resonatorFreqs}{end+1,1} = resonFreqs;
-    plotData.data{pdCols.peakResonFreqs}{end+1,1} = peakFreqs;
-    plotData.data{pdCols.stdResonEnergy}{end+1,1} = [];
+       
+    rpList{end+1} = thisStimRP;
+   
     params.plot.legendLabels{end+1} = 'stimulus';
 
     %normalize the stimulus RP based on the tapping RP, so that we
     %can more easily compare the graphs.
-    normRatio = maxThisPlot/max(plotData.data{pdCols.meanResonEnergy}{end,1});
-    plotData.data{pdCols.meanResonEnergy}{end,1} = ...
-	plotData.data{pdCols.meanResonEnergy}{end,1}*normRatio;
+    stim_mpp = thisStimRP.data{thisStimRPCols.meanResonatorEnergy};
+    normRatio = maxThisPlot./(max(stim_mpp));
+    stim_mpp = stim_mpp .* normRatio;
+    thisStimRP.data{thisStimRPCols.meanResonatorEnergy} = stim_mpp;
 
     params.dispPeaks.header = upper({params.labels{:} 'stimulus'});
     params.plot.plotStd = setParams.plot.plotStd;
     params.plot.lineSpec  = setParams.plot.lineSpec;
   
+    %%%%%%%%%%%
+    %OBTAIN CORRELATIONS BETWEEN MEAN RESPONSE MPP AND STIMULUS
+    nRP = length(rpList);
+    for iRP = 1:nRP-1
+      stim_mpp = thisStimRP.data{rpCols.meanResonatorEnergy};
+      mpp = rpList{iRP}.data{rpCols.meanResonatorEnergy};
+      [c(iRP),p(iRP)] = corr(mpp,stim_mpp);
+    end
+    %%%%%%%%%%%
+    
   else
+    nRP = length(rpList);
+    
     %not plotting stimulus data (for silence trials)
     params.plot.plotStd = setParams.plot.plotStd(1:end-1);
     params.plot.lineSpec  = setParams.plot.lineSpec(1:end-1);
@@ -151,12 +165,70 @@ for iStim = 1:length(stimIDs)
   end
 
   params.plot.ax = get_axhandle(axh,'rectPlot_top');
-  plot_meanResonEnergy(plotData,params.plot);
-
+  
+  params.plot.showResonTickLabels = 1;
+  params.plot.perform = {'stdEnergy'};
+  params.plot.color = 1;
+  plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
+  
   params.dispPeaks.dispWidths = 0;
   params.dispPeaks.ax = get_axhandle(axh,'rectPlot_bottom');
-  dispPeaks(plotData,params.dispPeaks);
-   
+  
+  %%%%%%%%%%%
+  %GET PEAK INFO FOR MEAN RESPONSE MPPs
+  peakInfo = get_resonPeakInfo(rpList{1}.data{rpCols.meanResonatorEnergy},...
+		    resonFreqs,params.peakFinder);
+  peakInfo = ensemble_tree2datastruct(peakInfo);
+  %temporary solution until ensemble_tree2datastruct is fixed
+  if(iscell(peakInfo.data{1}))
+    for iTmp = 1:length(peakInfo.data)
+      peakInfo.data{iTmp} = peakInfo.data{iTmp}{1};
+    end
+  end
+  
+  rpList{1}.data{rpCols.peakInfo} = peakInfo;
+  
+  
+  peakInfo = get_resonPeakInfo(rpList{2}.data{rpCols.meanResonatorEnergy},...
+		    resonFreqs,params.peakFinder);
+  peakInfo = ensemble_tree2datastruct(peakInfo);
+  %temporary solution until ensemble_tree2datastruct is fixed
+  if(iscell(peakInfo.data{1}))
+    for iTmp = 1:length(peakInfo.data)
+      peakInfo.data{iTmp} = peakInfo.data{iTmp}{1};
+    end
+  end
+  
+  rpList{2}.data{rpCols.peakInfo} = peakInfo;
+ 
+  %%%%%%%%%%%%
+  %DISPLAY PEAK INFO
+  
+  for iAx = 1:nRP
+  
+    fpax(iAx) = get_axhandle(axh,sprintf('multiBottom_%d',iAx));
+    set(fpax(iAx),'visible','off');
+    params.fontSize = 6;
+    if((iAx < nRP) && ~strcmp(thisStimCat,'silence'))
+      %add correlation and pval to header, except for last RP (stimulus)
+      appendToHead = sprintf('\ncorr w/stim: %.2f, p: %.4f',c(iAx),p(iAx)); 
+    else
+      appendToHead = '';
+    end
+    
+    fpHeader = [upper(params.plot.legendLabels{iAx}) appendToHead];
+		
+    params.fpTitle = fpHeader
+    plot_findPeaks(fpax(iAx),rpList{iAx},params);
+  
+  end
+
+  
+  
+  
+  
+  %%%%%%%%%%%%
+  
   if(params.savePlot)
     if(confirmOverwrite)
       print('-dpsc','-append','-adobecset',plotFname);

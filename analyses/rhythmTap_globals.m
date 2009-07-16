@@ -22,7 +22,7 @@ globals.paths.datapath = fullfile(project_root, 'project_data');
 globals.paths.resp_rp_path = fullfile(globals.paths.datapath,'resp_rp2');
 globals.paths.plot_root = plot_root;
 globals.paths.local_plot_root = fullfile(project_root,'plots');
-globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp2');
+globals.paths.resp_rp_plotPath = fullfile(plot_root,'resp_rp');
 globals.paths.stim_rp_plotPath = fullfile(plot_root,'stim_rp');
   
   
@@ -48,8 +48,7 @@ excludeForBehavioralCoding = {'03yus88141','11orj72111'};
 
 % Load lists about information, usually subjects and sessions to globally
 % exclude from the analyses
-globals.ensemble.filt.exclude.any.subject_id = {'tmp_*', ...
-		    '01fmt54011','01fss85301','01ttf50011','01ttf51011','01ttf52011','01ttf53011','01ttf84011','01ttf99011','09nlr84261','12hnd81021','05vsb78121'};
+globals.ensemble.filt.exclude.any.subject_id = {'tmp_*', '01fmt54011','01fss85301','01ttf50011','01ttf51011','01ttf52011','01ttf53011','01ttf84011','01ttf99011','09nlr84261','12hnd81021','05vsb78121'};
 % Other experiment-wide information
 globals.ensemble.terminal_form = form_id_const.RHYTHMIC_TAPPING_EFFECTS;
 
@@ -217,7 +216,7 @@ globals.behaviors.indiv = {...
 
 
 globals.stimIPEMParams.glob.process = {'ani','rp'};
-globals.stimIPEMParams.glob.force_recalc = {'rp'};
+globals.stimIPEMParams.glob.force_recalc = {};
 globals.stimIPEMParams.glob.save_calc = {'ani','rp'};
 globals.stimIPEMParams.ani = ani_paramGroups;
 globals.stimIPEMParams.rp =  rp_paramGroups_v2('param_group',...
@@ -229,3 +228,11 @@ globals.respIPEMParams.glob.save_calc = {'rp'};
 globals.respIPEMParams.rp = rp_paramGroups_v2('param_group',...
 				   'reson_filterQSpacing_periodBasedDecay',...
 				   'input_type','aud','gain_type','beta_distribution');
+
+globals.tapping_stats.midi = globals.midi;
+globals.tapping_stats.normalizeByPeakIOI = 1;
+globals.tapping_stats.ioiMinThresh = 0.050;
+globals.tapping_stats.ioiHistBinLim = [0 3];
+globals.tapping_stats.ioiHistBinSize = 0.05;
+globals.tapping_stats.stdev.nBins = 6;
+globals.tapping_stats.stdev.range = [0.75 1.25];

@@ -4,9 +4,11 @@
 %
 
 % 02/14/09 PJ - updated for SMPC09 abstract analyses
+% 7/5/09 ST - added coherence, von mises timing
 
-LOAD_DATA = 1;
-RUN_ANALYSES = 1;
+
+LOAD_DATA = 0;
+RUN_ANALYSES = 0;
 SAVE_ANALYSES = 0;
 GENERATE_FIGS = 1;
 
@@ -19,8 +21,8 @@ stim_rpProfile_fstub = ...
 
 subject_grooveEnum_fstub = ...
     'rhythmTap_grooveEnumByTapStats_17July2007_14:15.mat';
-subject_rpProfile_fstub = 'meanEnergies_peakWidths_byTrialSub.mat';
-'meanEnergies_byTrialSub.mat'
+subject_rpProfile_fstub = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
+%'meanEnergies_byTrialSub.mat'
 
 analysis_types.subject = {'nanmean', ... % 
       'nanstd', ... % 
@@ -51,7 +53,7 @@ if LOAD_DATA
   clear an
   
   % Response data with response profiles
-  matfname = fullfile(globals.paths.datapath, 'resp_rp', ...
+  matfname = fullfile(globals.paths.datapath, 'resp_rp2', ...
       subject_rpProfile_fstub);
   fprintf('Loading data from: %s\n',matfname);
   load(matfname,'meanEnergies');
@@ -61,7 +63,9 @@ if LOAD_DATA
   
   % Copy the variables from rp_ds to appropriate locations in resp_st so that
   % we only have to deal with a single datastruct from here on out.
-  copy_vars = {'meanEnergy','stdEnergy','resonFreqs','peakFreqs'};
+  copy_vars = {'meanEnergy','stdEnergy','resonFreqs','peakFreqs','meanCoherence','varCoherence',...
+	       'meanVMTimingDev','varVMTimingDev','meanVMViolation','varVMViolation',...
+	       'meanVMPrediction','varVMPrediction'};
   
   subids = unique(rp_ds.data{rpcols.subject_id});
   nsub = length(subids);
@@ -301,18 +305,21 @@ if GENERATE_FIGS
   %
   % Generate figure showing the average responses to the poststim questions
   %
-  figure(1),clf
+  %figure(1),clf
 %  poststim_question_fig;
   
   measures2plot = {'tapping_var_about_peak','rp_entropy'};
   measures2plot = {'numPeaks'};
+  measures2plot = {'meanCoherence','varCoherence',...
+		   'meanVMTimingDev','varVMTimingDev','meanVMViolation',...
+		   'varVMViolation','meanVMPrediction','varVMPrediction'};
   for ivar = 1:length(measures2plot)
 
     %subavg_tapping_corr_tap_question_fig;
     
     % Individual trial correlations
-    figure(7), clf
-    %indiv_trial_perf_x_quest_corr_fig;
+    %figure(7), clf
+    indiv_trial_perf_x_quest_corr_fig;
     
     % Variable means as a function of the category and condition
     %avg_by_cat_cond

@@ -12,6 +12,8 @@
 PLOT_ACROSS_CAT = 0;
 PLOT_GROUPED = 1;
 
+SEPARATE_CORR_LABELS = 1;
+
 across_cat_fig = 1;
 nrows = ceil(nquest/2);
 
@@ -27,6 +29,7 @@ cat_width = 0.75;
 
 append_str = '';
 figure(across_cat_fig), clf
+set(gcf, 'defaultaxesfontsize',12,'position',[100 100 800 1000],'paperposition',[0.5 0.5 8 10]);
 for iquest = 1:nquest
   if iquest > 1
     append_str = '-append';
@@ -73,13 +76,15 @@ for iquest = 1:nquest
   end % if PLOT_ACROSS_CAT
 
   figure(by_cat_fig), clf
-  set(gcf, 'defaultaxesfontsize',12)
-    
+  set(gcf, 'defaultaxesfontsize',12,'position',[100 100 800 1000],'paperposition',[0.5 0.5 8 10])
+
+  
+  ncond = length(use_tap_conds);
   for icat = 1:nstimcats
     curr_cat = groove_plot_order{icat};
     catmask = ismember(resp_st.data{respcols.stimulus_category}, curr_cat);
 
-    for icond = 1:length(use_tap_conds)
+    for icond = 1:ncond
       cond_str = use_tap_conds{icond};
       condmask = ismember(resp_st.data{respcols.tapping_condition}, cond_str);
 
@@ -96,11 +101,18 @@ for iquest = 1:nquest
       end
       
       if PLOT_GROUPED
-	subplot(length(use_tap_conds),1,icond)
+	%plotAxH = subplot(length(use_tap_conds),1,icond);
+	if(icat == 1)
+	  yPlotCoord = 1/ncond*(ncond - icond) + 0.1;
+	  plotHeight = 1/ncond*(0.7);
+	  plotAxH(icond) = axes('position',[0.1 yPlotCoord .8 plotHeight]);
+	else
+	  axes(plotAxH(icond));
+	end
 	hold on
       else
-	subplot(nstimcats,length(use_tap_conds), ...
-	    (icat-1)*length(use_tap_conds)+icond)
+	plotAxH = subplot(nstimcats,length(use_tap_conds), ...
+	    (icat-1)*length(use_tap_conds)+icond);
       end
       
       [cc,p] = corrcoef(xdata,ydata);
@@ -122,17 +134,7 @@ for iquest = 1:nquest
 	case 'rp_entropy'
 	  set(gca,'ylim',[0.8 1])
       end
-      
-      stat_str = sprintf('r=%1.3f,p=%1.3f', cc(2,1),p(2,1));
-      text_str = sprintf('%s\n%s', strrep(curr_cat,'_',' '), stat_str);
-      t = text((icat-1)/nstimcats+1/nstimcats/2, 0.02, text_str, ...
-	  'horizontalalign','center', ...
-	  'verticalalign','bottom', ...
-	  'units','normalized', ...
-	  'color',get(lh(1),'color'), ...
-	  'fontsize', 12, ...
-	  'fontweight','bold');
-      
+  
       xlabel('Rating category', 'fontsize',14)
       
       if icond == 1
@@ -147,6 +149,32 @@ for iquest = 1:nquest
 	title_str = sprintf(strrep(quest_subset(iquest).question_text, '(', '\n('));
 	title(title_str, 'fontsize',16)
       end
+      
+      
+      
+      if(SEPARATE_CORR_LABELS)
+	if(icat == 1)
+	  plotPos = get(plotAxH(icond),'position');
+	  corrPos = [plotPos(1) (plotPos(2) - .08) plotPos(3) .1];
+	  corrLabelAx(icond) = axes('position',corrPos,'visible','off');
+	else
+	  axes(corrLabelAx(icond));
+	end
+      end
+
+      stat_str = sprintf('r=%1.3f,p=%1.3f', cc(2,1),p(2,1));
+      text_str = sprintf('%s\n%s', strrep(curr_cat,'_',' '), stat_str);
+      t = text((icat-1)/nstimcats+1/nstimcats/2, 0.02, text_str, ...
+	  'horizontalalign','center', ...
+	  'verticalalign','bottom', ...
+	  'units','normalized', ...
+	  'color',get(lh(1),'color'), ...
+	  'fontsize', 12, ...
+	  'fontweight','bold');
+      
+      
+      
+      
       
     end % for icond=
   end % for icat =

@@ -72,6 +72,25 @@ if(ismember('movie_tapdata',params.axLocs))
   set(ax_h(end),'xtick',[],'ytick',[],'ydir','reverse');
 end
 
+if(ismember('rectPlot_bottom_multi',params.axLocs))
+  try
+    nBottom = params.numMulti.bottom;
+  catch
+    nBottom =1;
+  end
+  
+  for iAx = 1:nBottom
+    axLeft = 0.13 + (0.775) ./ nBottom .* (iAx-1);
+    axWidth = (0.775) ./ nBottom;
+    axPos = [axLeft 0.10 axWidth 0.34];
+    ax_h(end+1) = axes('position',axPos);
+    set(ax_h(end),'tag',sprintf('multiBottom_%d',iAx));
+  end
+  
+end
+
+
+
 %need to fix subplot ax_h indices
 if(ismember('subplot',params.axLocs))
   nRows = params.nRows;

@@ -7,8 +7,6 @@ function tapping_stats = tappingStats_v2(midiInfo,params)
 %
 % 15 Dec, 2006 first version, S.T.
 
-
-
 if(~isfield(params,'normalizeByPeakIOI'))
   params.normalizeByPeakIOI = 0;
 end
@@ -61,9 +59,6 @@ else
   ioiRight = [];
 end
 
-
-
-
 tapping_stats.data{tapping_stats_cols.both}.data{tsHandCols.ioi} = ioiBoth;
 tapping_stats.data{tapping_stats_cols.left}.data{tsHandCols.ioi} = ioiLeft;
 tapping_stats.data{tapping_stats_cols.right}.data{tsHandCols.ioi} = ioiRight;
@@ -87,7 +82,6 @@ for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.
     ioiHist = zeros(size(distributionVector));;
   end
   
-
   peakIdx = find(ioiHist == max(ioiHist));
   peakIOI = distributionVector(peakIdx);
     
@@ -98,13 +92,10 @@ for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.
   if(length(peakIOI) > 1)
     %see if they were consecutive
     if(all(diff(peakIdx) == 1))
-      
       peakIOI = mean(peakIOI);
-      
     else
       %if not consecutive, use the lowest index (peak in the
       %lowest bin)
-	
       peakIdx = min(peakIdx);
       peakIOI = distributionVector(peakIdx);
 	
@@ -145,7 +136,6 @@ for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.
   handStats.data{tsHandCols.hist_bin_size} = histBinSize;
  
   if(~isempty(ioi))
-
     handStats.data{tsHandCols.var_about_peak} = stdAboutPeak(ioi,stdRange);
   else
     handStats.data{tsHandCols.var_about_peak} = 0;
