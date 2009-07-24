@@ -172,8 +172,15 @@ an{na}.params.plot.plotStd  = [1 1 0];
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.savePlot = 1;
 an{na}.params.savePath = fullfile(globals.paths.resp_rp_plotPath,'mmp_resp_vs_stim');
-an{na}.params.filename = 'mpp_resp_vs_stim_15Jul2009_6p';
+an{na}.params.filename = 'mpp_resp_vs_stim_24Jul2009_12p';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
+
+na=na+1; %8
+an{na}.name = 'corr_resp_vs_stim';
+an{na}.fun = @corr_resp_vs_stim;
+an{na}.requires = {struct('name','plot_resp_meanRhythmProfile_byStimID_v2')};
+
+
 
 params.ensemble.conn_id = 7;
 params.run_analyses = [7];

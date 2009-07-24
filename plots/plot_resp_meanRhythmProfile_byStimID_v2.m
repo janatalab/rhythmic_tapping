@@ -22,6 +22,11 @@ stimIDs = unique(meanEnergies.data{meCols.stimulus_id});
 
 tappingConds = params.tapping_cond;
 
+exportRP = ensemble_init_data_struct;
+exportRP.vars = {'stimulus_id' 'artist' 'song_title' tappingConds{1}{1} tappingConds{2}{1} 'stimulus'};
+exportRPCols = set_var_col_const(exportRP.vars);
+exportRP.data{exportRPCols.stimulus_id} = stimIDs;
+
 if(params.savePlot)
   plotFname = fullfile(params.savePath,[params.filename '.ps']);
   confirmOverwrite = confirm_overwrite_file(plotFname);
@@ -30,7 +35,6 @@ end
 %store original plot parameters so that they can be manipulated
 %based on whether or not a stim is being plotted.
 setParams.plot = params.plot;
-
 
 for iStim = 1:length(stimIDs)
 
@@ -42,7 +46,9 @@ for iStim = 1:length(stimIDs)
   thisSongName = meList.data{meCols.song_name}{1};
   thisArtist   = meList.data{meCols.artist}{1};
   thisStimCat  = meList.data{meCols.stimulus_category}{1};
- 
+
+  exportRP.data{exportRPCols.artist}{iStim,1} = thisArtist;
+  exportRP.data{exportRPCols.song_title}{iStim,1} = thisSongName;
   
   figParams.axLocs = {'rectPlot_bottom_multi','rectPlot_top'};
   figParams.numMulti.bottom = 3;
@@ -53,7 +59,7 @@ for iStim = 1:length(stimIDs)
   if(~strcmp(thisStimCat,'silence'))
     figParams.plotTitle = [figParams.plotTitle sprintf('%s, %s',thisArtist,thisSongName)];
   end
-  [figh,axh] = rhythmTap_figure(figParams);
+  %[figh,axh] = rhythmTap_figure(figParams);
   
   params.plot.legendLabels = {};
   plotData = ensemble_init_data_struct;
@@ -107,6 +113,8 @@ for iStim = 1:length(stimIDs)
     maxEnergy = max(meanMEnergy);
     maxThisPlot = max(maxEnergy,maxThisPlot);
     
+    exportRP.data{exportRPCols.(thisTapCond{1})}(iStim,:) = meanMEnergy;
+    
   end
  
   %obtain the stimulus RP
@@ -155,6 +163,8 @@ for iStim = 1:length(stimIDs)
     end
     %%%%%%%%%%%
     
+     exportRP.data{exportRPCols.stimulus}(iStim,:) = stimMeanEnergy;
+    
   else
     nRP = length(rpList);
     
@@ -164,15 +174,15 @@ for iStim = 1:length(stimIDs)
     params.dispPeaks.header = upper(params.labels);
   end
 
-  params.plot.ax = get_axhandle(axh,'rectPlot_top');
+  %params.plot.ax = get_axhandle(axh,'rectPlot_top');
   
   params.plot.showResonTickLabels = 1;
   params.plot.perform = {'stdEnergy'};
   params.plot.color = 1;
-  plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
+  %plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
   
   params.dispPeaks.dispWidths = 0;
-  params.dispPeaks.ax = get_axhandle(axh,'rectPlot_bottom');
+  %params.dispPeaks.ax = get_axhandle(axh,'rectPlot_bottom');
   
   %%%%%%%%%%%
   %GET PEAK INFO FOR MEAN RESPONSE MPPs
@@ -206,8 +216,8 @@ for iStim = 1:length(stimIDs)
   
   for iAx = 1:nRP
   
-    fpax(iAx) = get_axhandle(axh,sprintf('multiBottom_%d',iAx));
-    set(fpax(iAx),'visible','off');
+    %fpax(iAx) = get_axhandle(axh,sprintf('multiBottom_%d',iAx));
+    %set(fpax(iAx),'visible','off');
     params.fontSize = 6;
     if((iAx < nRP) && ~strcmp(thisStimCat,'silence'))
       %add correlation and pval to header, except for last RP (stimulus)
@@ -218,29 +228,27 @@ for iStim = 1:length(stimIDs)
     
     fpHeader = [upper(params.plot.legendLabels{iAx}) appendToHead];
 		
-    params.fpTitle = fpHeader
-    plot_findPeaks(fpax(iAx),rpList{iAx},params);
+    params.fpTitle = fpHeader;
+    %plot_findPeaks(fpax(iAx),rpList{iAx},params);
   
-  end
-
-  
-  
-  
+  end 
   
   %%%%%%%%%%%%
   
+  %UNCOMMENT
+  %{
   if(params.savePlot)
     if(confirmOverwrite)
       print('-dpsc','-append','-adobecset',plotFname);
     end
     delete(figh);
   end
-  
+  %}
   
 end
   
   
   
-outData = [];
+outData = exportRP;
 
 return
