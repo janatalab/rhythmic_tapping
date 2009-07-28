@@ -3,7 +3,7 @@ function outData = corr_resp_vs_stim(inData,params)
 
 params.sets = {'free_form_tap' 'iso_tap'};
 params.silence_stimID = 6497;
-params.plotFname = 'corr_meanResp_vs_stim.ps';
+params.plotFname = 'corr_meanResp_vs_stim_24July.ps';
 params.plotPath = '/data2/rhythm/rhythmic_tapping_v2/plots/resp_rp/mmp_resp_vs_stim';
 
 plotFPath = fullfile(params.plotPath,params.plotFname)
@@ -22,6 +22,8 @@ nStims = length(stimulusIDs);
 
 stimMPPs = inData.data{inDataCols.stimulus};
 
+%obtain coefficients for butterworth high pass filter
+[b,a] = butter(3,.15,'high');
 
 for iTap = 1:nStims
   
@@ -32,8 +34,15 @@ for iTap = 1:nStims
               
       thisTapMPP = setMPPs(iTap,:);
       
+      %high pass filter mpp
+      thisTapMPP = filtfilt(b,a,thisTapMPP);
+      
       for iStim = 1:nStims
 	stimMPP = stimMPPs(iStim,:);
+	
+	%high pass filter mpp
+	stimMPP = filtfilt(b,a,stimMPP);
+	
 	[c,p] = corr(thisTapMPP',stimMPP');
       
 	corrList(iStim,iSet) = c;

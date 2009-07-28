@@ -36,6 +36,10 @@ end
 %based on whether or not a stim is being plotted.
 setParams.plot = params.plot;
 
+%obtain coefficients for butterworth high pass filter
+[b,a] = butter(3,.15,'high');
+
+
 for iStim = 1:length(stimIDs)
 
   thisStimulusID = stimIDs(iStim);
@@ -59,7 +63,7 @@ for iStim = 1:length(stimIDs)
   if(~strcmp(thisStimCat,'silence'))
     figParams.plotTitle = [figParams.plotTitle sprintf('%s, %s',thisArtist,thisSongName)];
   end
-  %[figh,axh] = rhythmTap_figure(figParams);
+  [figh,axh] = rhythmTap_figure(figParams);
   
   params.plot.legendLabels = {};
   plotData = ensemble_init_data_struct;
@@ -69,7 +73,8 @@ for iStim = 1:length(stimIDs)
   pdCols = set_var_col_const(plotData.vars);
   
   
-  maxThisPlot = 0;
+  maxThisPlot = NaN;
+  minThisPlot = NaN;
   for iTapCond = 1:length(tappingConds)
 
     thisTapCond = tappingConds{iTapCond};
@@ -81,6 +86,10 @@ for iStim = 1:length(stimIDs)
     meanEnergyMat = cell2mat(meTapList.data{meCols.meanEnergy}');
     nSubs = size(meanEnergyMat,2);    
     meanMEnergy = mean(meanEnergyMat,2);
+
+    %high pass filter
+    meanMEnergy = filtfilt(b,a,meanMEnergy);
+    
     stdMEnergy  = std(meanEnergyMat,[],2)./sqrt(nSubs);
     resonFreqs  = meTapList.data{meCols.resonFreqs}{1};
     
@@ -111,8 +120,9 @@ for iStim = 1:length(stimIDs)
     		    sprintf(' (N=%d)',nSubs)];
  
     maxEnergy = max(meanMEnergy);
+    minEnergy = min(meanMEnergy);
     maxThisPlot = max(maxEnergy,maxThisPlot);
-    
+    minThisPlot = min(minEnergy,minThisPlot);
     exportRP.data{exportRPCols.(thisTapCond{1})}(iStim,:) = meanMEnergy;
     
   end
@@ -138,17 +148,26 @@ for iStim = 1:length(stimIDs)
     peakFreqs = peakInfo.data{peakInfoCols.peakFreq};
     
        
-    rpList{end+1} = thisStimRP;
+    %rpList{end+1} = thisStimRP;
    
     params.plot.legendLabels{end+1} = 'stimulus';
 
-    %normalize the stimulus RP based on the tapping RP, so that we
-    %can more easily compare the graphs.
+    
+    %store stim mpp in temporary variable
     stim_mpp = thisStimRP.data{thisStimRPCols.meanResonatorEnergy};
-    normRatio = maxThisPlot./(max(stim_mpp));
-    stim_mpp = stim_mpp .* normRatio;
-    thisStimRP.data{thisStimRPCols.meanResonatorEnergy} = stim_mpp;
 
+    %high pass filter stim mpp
+    stim_mpp = filtfilt(b,a,stim_mpp);
+  
+    %normalize the stimulus RP based on the tapping RP, so that we
+    %can more easily compare the graphs.   
+    %normRatio = maxThisPlot./(max(stim_mpp));
+    normRatio = (maxThisPlot-minThisPlot) ./ (max(stim_mpp) - min(stim_mpp));
+    stim_mpp = (stim_mpp - min(stim_mpp)) .* normRatio + minThisPlot;
+   
+    thisStimRP.data{thisStimRPCols.meanResonatorEnergy} = stim_mpp;
+    rpList{end+1} = thisStimRP;
+    
     params.dispPeaks.header = upper({params.labels{:} 'stimulus'});
     params.plot.plotStd = setParams.plot.plotStd;
     params.plot.lineSpec  = setParams.plot.lineSpec;
@@ -157,6 +176,7 @@ for iStim = 1:length(stimIDs)
     %OBTAIN CORRELATIONS BETWEEN MEAN RESPONSE MPP AND STIMULUS
     nRP = length(rpList);
     for iRP = 1:nRP-1
+ 
       stim_mpp = thisStimRP.data{rpCols.meanResonatorEnergy};
       mpp = rpList{iRP}.data{rpCols.meanResonatorEnergy};
       [c(iRP),p(iRP)] = corr(mpp,stim_mpp);
@@ -174,15 +194,15 @@ for iStim = 1:length(stimIDs)
     params.dispPeaks.header = upper(params.labels);
   end
 
-  %params.plot.ax = get_axhandle(axh,'rectPlot_top');
+  params.plot.ax = get_axhandle(axh,'rectPlot_top');
   
   params.plot.showResonTickLabels = 1;
   params.plot.perform = {'stdEnergy'};
   params.plot.color = 1;
-  %plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
+  plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
   
   params.dispPeaks.dispWidths = 0;
-  %params.dispPeaks.ax = get_axhandle(axh,'rectPlot_bottom');
+  params.dispPeaks.ax = get_axhandle(axh,'rectPlot_bottom');
   
   %%%%%%%%%%%
   %GET PEAK INFO FOR MEAN RESPONSE MPPs
@@ -216,8 +236,8 @@ for iStim = 1:length(stimIDs)
   
   for iAx = 1:nRP
   
-    %fpax(iAx) = get_axhandle(axh,sprintf('multiBottom_%d',iAx));
-    %set(fpax(iAx),'visible','off');
+    fpax(iAx) = get_axhandle(axh,sprintf('multiBottom_%d',iAx));
+    set(fpax(iAx),'visible','off');
     params.fontSize = 6;
     if((iAx < nRP) && ~strcmp(thisStimCat,'silence'))
       %add correlation and pval to header, except for last RP (stimulus)
@@ -229,21 +249,20 @@ for iStim = 1:length(stimIDs)
     fpHeader = [upper(params.plot.legendLabels{iAx}) appendToHead];
 		
     params.fpTitle = fpHeader;
-    %plot_findPeaks(fpax(iAx),rpList{iAx},params);
+    plot_findPeaks(fpax(iAx),rpList{iAx},params);
   
   end 
   
   %%%%%%%%%%%%
   
-  %UNCOMMENT
-  %{
+    
   if(params.savePlot)
     if(confirmOverwrite)
       print('-dpsc','-append','-adobecset',plotFname);
     end
     delete(figh);
   end
-  %}
+  
   
 end
   

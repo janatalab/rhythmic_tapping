@@ -165,6 +165,11 @@ an{na}.params.numResonTicks = 8;
 an{na}.params.tapping_cond = {{'iso_tap'},{'free_form_tap'}};
 an{na}.params.labels = {'iso tap','free form tap'};
 an{na}.params.ipem = globals.stimIPEMParams;
+%telling ipem_proc_series not to perform complexity here
+%it would be nice to be able to just ignore these parameters when matching
+an{na}.params.ipem.rp.perform.calcTemporalExpect = 0;
+an{na}.params.ipem.rp.perform.calcVonMises = 0;
+an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
 %an{na}.params.plot.lineSpec = {'b-','r-','k-'};
 an{na}.params.plot.plotStyle = 'fill';
 an{na}.params.plot.lineSpec = {[1 0 1],[0 1 0],[0 0 0]};
@@ -180,9 +185,21 @@ an{na}.name = 'corr_resp_vs_stim';
 an{na}.fun = @corr_resp_vs_stim;
 an{na}.requires = {struct('name','plot_resp_meanRhythmProfile_byStimID_v2')};
 
+na=na+1; %9
+an{na}.name = 'indiv_corr_resp_vs_stim';
+an{na}.fun = @indiv_corr_resp_vs_stim;
+an{na}.params.ipem = globals.stimIPEMParams;
+an{na}.params.ipem.rp.perform.calcTemporalExpect = 0;
+an{na}.params.ipem.rp.perform.calcVonMises = 0;
+an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
+an{na}.params.skipStimIDs = globals.ensemble.silence_stim_id;
+an{na}.params.saveData = 1;
+an{na}.params.path = '/data2/groove/smpc09/mat';
+an{na}.params.fname = 'indiv_corr_resp_vs_stim.mat';
+an{na}.requires = {struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [7];
+params.run_analyses = [9];
 an = ensemble_jobman(an,params);
 return
