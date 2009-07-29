@@ -1,7 +1,9 @@
 function globals = rhythmTap_globals
 % 01/25/07 PJ
 % 01/31/07 ST Edited for rhythmic tapping experiment
-
+% 07/01/09 ST edited RP params to conform to rhythm_profiler_v2
+%             param structure
+%
 % Bring up the generic list of form name definitions
 dbstop if error
 

@@ -5,20 +5,20 @@ function outData = indiv_corr_resp_vs_stim(inData,params)
 % 
 %
 
+loadPath = fullfile(params.path,params.loadFname);
+loadRespRP = load(loadPath);
+
+trialMPP = loadRespRP.meanEnergies;
+
 skipStimIDs = params.skipStimIDs;
 
 %obtain coefficients for butterworth high pass filter
 [b,a] = butter(3,.15,'high');
 
-trialMPP = inData;
 trialMPP.vars = {trialMPP.vars{:} 'corr' 'pval'};
 meCols = set_var_col_const(trialMPP.vars);
 
 nTrials = length(trialMPP.data{meCols.meanEnergy});
-
-%matVars = {'stimulus_id','subject_id','trial_order','tapping_cond','stimulus_category','corr','pval'};
-%matCols = set_var_col_const(matVars);
-
 
 stimIDList = unique(trialMPP.data{meCols.stimulus_id});
 stimIDList = setdiff(stimIDList,skipStimIDs);
@@ -42,8 +42,6 @@ for iStim = 1:nStims
   stimMPPList{iStim} = stimMPP;
  
 end
-
-
 
 for iTrial = 1:nTrials
 
@@ -71,15 +69,9 @@ for iTrial = 1:nTrials
  
 end
 
-
-
-
-
-if(params.saveData)
-  
+if(params.saveData)  
   fullfpath = fullfile(params.path,params.fname);
   save(fullfpath,'trialMPP');
-
 end
 
 

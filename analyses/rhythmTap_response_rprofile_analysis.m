@@ -93,8 +93,9 @@ an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_groupBy_s
 na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
-an{na}.params.process = {'loadRP','calcMeans','recalcTappingStats'};
+an{na}.params.process = {'calcRP','calcMeans','recalcTappingStats'};
 an{na}.params.savePath = globals.paths.resp_rp_path;
+an{na}.params.fname = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
 an{na}.params.nmat2aud.padStop = 0;
@@ -105,7 +106,6 @@ an{na}.params.tapping_stats = globals.tapping_stats;
 an{na}.params.peakFinder.thresh = 0.25;
 an{na}.params.ipem_proc = globals.respIPEMParams;
 %param for running coherence calc
-an{na}.params.ipem_proc.rp.perform.calc = 1;
 an{na}.params.ipem_proc.rp.perform.calcTemporalExpect = 1;
 an{na}.params.ipem_proc.rp.perform.calcVonMises = 1;
 an{na}.params.ipem_proc.rp.perform.calcPhaseCoherence = 1;
@@ -194,12 +194,13 @@ an{na}.params.ipem.rp.perform.calcVonMises = 0;
 an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
 an{na}.params.skipStimIDs = globals.ensemble.silence_stim_id;
 an{na}.params.saveData = 1;
-an{na}.params.path = '/data2/groove/smpc09/mat';
+an{na}.params.path = globals.paths.resp_rp_path;
+an{na}.params.loadFname = an{5}.params.fname;
 an{na}.params.fname = 'indiv_corr_resp_vs_stim.mat';
-an{na}.requires = {struct('name','midiResp_rhythm_profiler','type','mean_energies')};
+an{na}.requires = {};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [9];
+params.run_analyses = [5];
 an = ensemble_jobman(an,params);
 return
