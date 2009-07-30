@@ -8,10 +8,23 @@ function outData = plot_resp_meanRhythmProfile_byStimID_v2(inData,params)
 % be set accordingly
 %
 % 18 July 2007, Stefan Tomic
+% 29 July 2009, PJ - enabled restriction to desired stims
 
+try procStims = params.procStims; catch procStims = []; end
+try existingRPFile = params.rpFilename; catch existingRPFile = ''; end
 
 meanEnergiesIdx = ensemble_find_analysis_struct(inData,struct('name','mean_energies_by_trial_and_subject'));
-meanEnergies = inData{meanEnergiesIdx};
+if isempty(meanEnergiesIdx)
+  fprintf('Could not locate mean_energies_by_trial_and_subject in input data')
+  if ~isempty(existingRPFile)
+    rpfname = fullfile(params.rpPath,existingRPFile);
+    fprintf('\tLoading meanEnergies from %s\n', rpfname);
+    tmp = load(rpfname);
+    meanEnergies = tmp.meanEnergies;
+  end
+else
+  meanEnergies = inData{meanEnergiesIdx};
+end
 meCols = set_var_col_const(meanEnergies.vars);
 
 stimulusMetadataIdx = ensemble_find_analysis_struct(inData,struct('name','stimulus_metadata'));
@@ -19,6 +32,9 @@ stimulusMetadata = inData{stimulusMetadataIdx};
 stimulusMetadataCols = set_var_col_const(stimulusMetadata.vars);
 
 stimIDs = unique(meanEnergies.data{meCols.stimulus_id});
+if ~isempty(procStims)
+  stimIDs = intersect(stimIDs,procStims);
+end
 
 tappingConds = params.tapping_cond;
 
@@ -199,6 +215,7 @@ for iStim = 1:length(stimIDs)
   params.plot.showResonTickLabels = 1;
   params.plot.perform = {'stdEnergy'};
   params.plot.color = 1;
+  params.plot.peakFinder = params.peakFinder;
   plot_rpMeanResonEnergy(params.plot.ax,rpList,params.plot);
   
   params.dispPeaks.dispWidths = 0;
@@ -258,7 +275,7 @@ for iStim = 1:length(stimIDs)
     
   if(params.savePlot)
     if(confirmOverwrite)
-      print('-dpsc','-append','-adobecset',plotFname);
+      print(plotFname,'-dpsc2','-append','-adobecset','-painters');
     end
     delete(figh);
   end
