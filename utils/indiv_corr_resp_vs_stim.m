@@ -39,6 +39,10 @@ for iStim = 1:nStims
   end
   stimRPCols = set_var_col_const(thisStimRP.vars);
   stimMPP = thisStimRP.data{stimRPCols.meanResonatorEnergy};
+  
+  % Filter the stimMPP now. No need to do it multiple times later.
+  stimMPP = filtfilt(b,a,stimMPP);
+  
   stimMPPList{iStim} = stimMPP;
  
 end
@@ -54,7 +58,6 @@ for iTrial = 1:nTrials
     stimIdx = find(thisStimID == stimIDList);
     stimMPP = stimMPPList{stimIdx};
     
-    stimMPP = filtfilt(b,a,stimMPP);
     thisTapMPP = filtfilt(b,a,thisTapMPP);
     
     [c,p] = corr(thisTapMPP,stimMPP);

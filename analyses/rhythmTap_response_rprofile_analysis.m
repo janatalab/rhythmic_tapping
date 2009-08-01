@@ -11,7 +11,7 @@ load (fullfile(globals.paths.datapath,...
 %load (fullfile(globals.paths.datapath,...
 %'rhythmTap_response_rprofile_analysis_paper_26Nov2007_8:55.mat'));
 
-
+% For SMPC09 I generated rhythmTap_response_rprofile_analysis_01Aug2009
 
 end
 
@@ -93,7 +93,7 @@ an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_groupBy_s
 na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
-an{na}.params.process = {'calcRP','calcMeans','recalcTappingStats'};
+an{na}.params.process = {'loadRP','calcMeans','recalcTappingStats'};
 an{na}.params.savePath = globals.paths.resp_rp_path;
 an{na}.params.fname = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
 an{na}.params.saveCalc = 1;
@@ -158,12 +158,13 @@ an{na}.fun = @plot_resp_meanRhythmProfile_byStimID_v2;
 an{na}.params.stimAnalysisMatFile = fullfile(globals.paths.datapath,'rhythmTap_stimulus_rprofile_analysis_27_11:30.mat');
 an{na}.params.stimAnMeanRPJob = 'get_stim_meanRhythmProfiles';
 an{na}.params.rpPath = globals.paths.resp_rp_path;
-%an{na}.params.filename = 'meanEnergies_byTrialSub.mat';
+an{na}.params.rpFilename = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
 %an{na}.params.peakFinder.thresh = 0.25;
 an{na}.params.peakFinder = globals.respIPEMParams.rp.resonatorBank.peakFinder;
 an{na}.params.numResonTicks = 8;
 an{na}.params.tapping_cond = {{'iso_tap'},{'free_form_tap'}};
 an{na}.params.labels = {'iso tap','free form tap'};
+an{na}.params.procStims = [];  % [6251 5886 5410 1970] - used for SMPC09 talk
 an{na}.params.ipem = globals.stimIPEMParams;
 %telling ipem_proc_series not to perform complexity here
 %it would be nice to be able to just ignore these parameters when matching
@@ -172,17 +173,23 @@ an{na}.params.ipem.rp.perform.calcVonMises = 0;
 an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
 %an{na}.params.plot.lineSpec = {'b-','r-','k-'};
 an{na}.params.plot.plotStyle = 'fill';
-an{na}.params.plot.lineSpec = {[1 0 1],[0 1 0],[0 0 0]};
+an{na}.params.plot.lineSpec = {[0 0 1],[1 0 0],[0 0 0]};
 an{na}.params.plot.plotStd  = [1 1 0];
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.savePlot = 1;
 an{na}.params.savePath = fullfile(globals.paths.resp_rp_plotPath,'mmp_resp_vs_stim');
-an{na}.params.filename = 'mpp_resp_vs_stim_24Jul2009_12p';
+an{na}.params.filename = 'mpp_resp_vs_stim_29Jul2009';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 na=na+1; %8
 an{na}.name = 'corr_resp_vs_stim';
 an{na}.fun = @corr_resp_vs_stim;
+an{na}.params.sets = {'free_form_tap' 'iso_tap'};
+an{na}.params.silence_stimID = 6497;
+an{na}.params.plotFname = 'corr_meanResp_vs_stim_01Aug.ps';
+an{na}.params.plotPath = '/data2/rhythm/rhythmic_tapping_v2/plots/resp_rp/mmp_resp_vs_stim';
+an{na}.params.plot.plotOverall = 1;
+an{na}.params.plot.plotByStim = 0;
 an{na}.requires = {struct('name','plot_resp_meanRhythmProfile_byStimID_v2')};
 
 na=na+1; %9
@@ -201,6 +208,6 @@ an{na}.requires = {};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [8];
 an = ensemble_jobman(an,params);
 return
