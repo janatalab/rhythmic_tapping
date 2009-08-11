@@ -27,7 +27,8 @@ analysis_types.subject = {'sum_prop', ... % sum the proportion of time per stim
 analysis_types.group = {'nanmean','nanstd','nsub'};
 
 if LOAD_DATA
-  datafstub = 'rhythmTap_behaveCodingAnalysis_9-May-2007_22:04.mat';
+  %datafstub = 'rhythmTap_behaveCodingAnalysis_9-May-2007_22:04.mat';
+  datafstub = 'rhythmTap_behaveCodingAnalysis_6Aug2009.mat';
   datafname = fullfile(globals.paths.datapath, datafstub);
 
   fprintf('Loading data from: %s\n', datafname);
@@ -95,7 +96,7 @@ if RUN_ANALYSES
   % Open an output file
   %
   outfname = ...
-      fullfile(globals.paths.logpath,'rhythmTap_behaveCoding_data.txt');
+      fullfile(globals.paths.logpath,'rhythmTap_behaveCoding_data_7Aug2009.txt');
   fprintf('Writing data table to: %s', outfname);
   fid = fopen(outfname,'wt');
   fprintf(fid,'Subject\tStimulus\tTapcond\tBodyGroup\tAmtMove\n');
@@ -310,7 +311,7 @@ if GENERATE_FIGS
     if ibehave_group > 1
       append_str = '-append';
     end
-    figfname = fullfile(globals.paths.figpath,'behave_summary.ps');
+    figfname = fullfile(globals.paths.figpath,'behave_summary_6Aug2009.ps');
     fprintf('Printing figure to %s\n', figfname);
     print(figfname,'-dpsc','-adobecset',append_str);
     

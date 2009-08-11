@@ -35,7 +35,7 @@ disp.data{dispCols.column_labels} = {'subject_id' 'trial_num' 'tapping_condition
 disp.data{dispCols.column_formats} = {'%s' '%9d' '%17s' '%8d' '%14.2f' ...
 		    '%14.2f' '%d' '%.1f' '%7.2f' '%5.2f' '%7.2f' '%5.2f' '%s'};
 
-dispParams.fname = fullfile(globals.paths.logpath,'behaveCodingQuickResults_9July.txt');
+dispParams.fname = fullfile(globals.paths.logpath,'behaveCodingQuickResults_6Aug2009.txt');
 dispParams.write2file = 1;
 
 ensemble_display_table(disp,dispParams);

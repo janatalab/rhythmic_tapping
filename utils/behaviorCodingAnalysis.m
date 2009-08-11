@@ -32,9 +32,9 @@ stimGroove.data{stimGrooveCols.stimulus_id}(end+1) = ...
     SILENCE_STIM_ID;
 stimGroove.data{stimGrooveCols.groove_rating}{end+1} = 'silence';
 
-if(isfield(params,'load_behavior_table'))
+if(ismember('load_behaviors',params.perform))
   load(params.load_behavior_table,'behaveTable','behaveTableCols');
-else
+elseif(ismember('parse_behaviors',params.perform))
   %parse the behavior coding event logs
   bhParams = params.behave_parser;
   behaveTable = parser_behavioral_coding([],bhParams);
@@ -42,8 +42,15 @@ else
   behaveTableCols = set_var_col_const(behaveTable.vars);
   behaveTable.data{behaveTableCols.dpTime} = repmat(NaN, ...
 						    length(behaveTable.data{behaveTableCols.Time}),1);
-  if(isfield(params,'save_behavior_table'))
-    save(params.save_behavior_table,'behaveTable','behaveTableCols');
+  if(ismember('save_behaviors',params.perform))
+    
+    saveFname = fullfile(params.behaveTable_path,params.behaveTable_fname);
+    
+    if(confirm_overwrite_file(saveFname))
+      save(saveFname,'behaveTable','behaveTableCols');
+    else
+     fprintf('Did not save behavior data because file already exists.\n\n'); 
+    end
   end
   
 end

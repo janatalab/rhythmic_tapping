@@ -3,7 +3,7 @@
 
 globals = rhythmTap_globals;
 
-outputFile = fullfile(globals.paths.logpath,'behaveCodingQuickStats_9July.txt');
+outputFile = fullfile(globals.paths.logpath,'behaveCodingQuickStats_6Aug2009.txt');
 
 if(exist(outputFile,'file'))
   delete(outputFile);
@@ -21,7 +21,7 @@ for iSub = 1:length(subIDList)
   
   fprintf('Processing subject: %s',thisSubID);
   
-  for thisCoderID = 1:2
+  for thisCoderID = 1:3
   
     clear tmpFilt;
     tmpFilt.include.all.subject_id = {thisSubID};
