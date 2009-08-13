@@ -32,8 +32,10 @@ stimGroove.data{stimGrooveCols.stimulus_id}(end+1) = ...
     SILENCE_STIM_ID;
 stimGroove.data{stimGrooveCols.groove_rating}{end+1} = 'silence';
 
+behaveTableFullPath = fullfile(params.behaveTable_path,params.behaveTable_fname);
+
 if(ismember('load_behaviors',params.perform))
-  load(params.load_behavior_table,'behaveTable','behaveTableCols');
+  load(behaveTableFullPath,'behaveTable','behaveTableCols');
 elseif(ismember('parse_behaviors',params.perform))
   %parse the behavior coding event logs
   bhParams = params.behave_parser;
@@ -44,10 +46,15 @@ elseif(ismember('parse_behaviors',params.perform))
 						    length(behaveTable.data{behaveTableCols.Time}),1);
   if(ismember('save_behaviors',params.perform))
     
-    saveFname = fullfile(params.behaveTable_path,params.behaveTable_fname);
-    
-    if(confirm_overwrite_file(saveFname))
-      save(saveFname,'behaveTable','behaveTableCols');
+    %the following saves the data that was parsed out from all the
+    %coder log files. Since parsing is a lengthy process, the data
+    %is saved as an intermediary step here.
+    %the trials have not yet been organized into easy to analyze
+    %variables (behavior proportion, stimulus ID, tapping cond.,
+    %etc). The reorganization occurs in the next block in the
+    %trialBehaviors structure
+    if(confirm_overwrite_file(behaveTableFullPath))
+      save(behaveTableFullPath,'behaveTable','behaveTableCols');
     else
      fprintf('Did not save behavior data because file already exists.\n\n'); 
     end
@@ -209,10 +216,10 @@ end
 trialBehaviors = ensemble_init_data_struct;
 trialBehaviors.vars = {'stimulus_id','trial_id','trial_order', ...
 		    'subject_id','stimulus_category', ...
-		    'tapping_condition','behavior','coder_id', ...
+		    'tapping_condition','behavior','is_rhythmic','body_group','coder_id', ...
 		    'behavior_proportion' 'coder_time' 'beh_prop_total' 'trial_start_stop' 'beh_start_stop'};
 trialBehaviorCols = set_var_col_const(trialBehaviors.vars);
-trialBehaviors.data = {[],[],[],{},{},{},{},[],[],[],[],[],[]};
+trialBehaviors.data = cell(size(trialBehaviors.vars));
 
 subIDList = unique(behaveTable.data{behaveTableCols.Subject});
 
@@ -292,10 +299,90 @@ for iSub = 1:length(subIDList)
 	  [subBehaviorStartTimes(behaviorIdxs) subBehaviorEndTimes(behaviorIdxs)];
       trialBehaviors.data{trialBehaviorCols.coder_time}(end+1:end+numToAdd,1)=...
 	  behaviorsThisSub.data{behaveTableCols.Time}(behaviorIdxs);
+      
+      
   end
   
 
 end
+
+%%%%%%ASSIGN RHYTHMIC/NON-RHYTHMIC, BODY PART COLUMNS%%%%%
+
+%initialize the is_rhythmic variable to NaNs. If
+%any(isnan(is_rhythmic)) after assigning data to this variable,
+%then we are missing some behaviors in body_rhythmic_groups
+datasize = size(trialBehaviors.data{trialBehaviorCols.stimulus_id});
+trialBehaviors.data{trialBehaviorCols.is_rhythmic} = nan(datasize);
+trialBehaviors.data{trialBehaviorCols.body_group} = {};
+
+body_rhythmic_groups = assign_behavior_info('body_group');
+nbg = size(body_rhythmic_groups,1);
+behaviorList = trialBehaviors.data{trialBehaviorCols.behavior};
+
+%assign rhythmic/non-rhythmic column to body_rhythmic_groups
+for ibg = 1:nbg
+  
+  [rhythTag,remTok] = strtok(body_rhythmic_groups{ibg,1},',');
+  body_group = strtok(remTok,',');
+  
+  all_behavior_groups{ibg,1} = body_group;
+  all_behavior_groups{ibg,2} = rhythTag;
+  all_behavior_groups{ibg,3} = body_rhythmic_groups{ibg,2};
+end
+
+misc_groups = assign_behavior_info('misc');
+nmisc = size(misc_groups,1);
+nall = size(all_behavior_groups,1);
+all_behavior_groups(nall+1:nall+nmisc,1) = misc_groups(:,1);
+all_behavior_groups(nall+1:nall+nmisc,2) = repmat({'non_rhythmic'},nmisc,1);
+all_behavior_groups(nall+1:nall+nmisc,3) = misc_groups(:,2);
+
+nbg = size(all_behavior_groups,1);
+for ibg = 1:nbg
+  
+  behaviorsThisGroup = all_behavior_groups{ibg,3};
+  maskThisGroup = ismember(behaviorList,behaviorsThisGroup);
+  
+  body_group = all_behavior_groups{ibg,1};
+  rhythTag = all_behavior_groups{ibg,2};
+  
+  is_rhythmic = strcmp(rhythTag,'rhythmic');
+
+  %a little sanity check here to make sure we are only dealing with
+  %'rhythmic' and 'non_rhythmic' strings
+  if(~is_rhythmic && ~strcmp(rhythTag,'non_rhythmic'))
+    error(['Found behavior which is not rhythmic but ''non_rhythmic''' ...
+	   ' string did not match']);
+  end
+  
+  trialBehaviors.data{trialBehaviorCols.is_rhythmic}(find(maskThisGroup),1) = is_rhythmic;
+  trialBehaviors.data{trialBehaviorCols.body_group}(find(maskThisGroup),1) = repmat({body_group},sum(maskThisGroup),1);
+   
+end
+
+
+if(any(isnan(trialBehaviors.data{trialBehaviorCols.is_rhythmic})))
+  error('Did not match all behaviors to ''is_rhythmic'' property');
+end
+
+
+%%%%%% WRITE TO TEXT FILE %%%%%%
+
+outFileParams.fname = fullfile(params.behaveTable_path,params.outputTextFile);
+outFileParams.write2file = 1;
+
+outFileData.vars = {'column_labels','column_formats','data'};
+ofCols = set_var_col_const(outFileData.vars);
+
+outFields = trialBehaviorCols;
+outFields = rmfield(outFields,{'trial_start_stop','beh_start_stop','coder_time'});
+outFieldIdxs = struct2array(outFields);
+outFileData.data{ofCols.column_labels} = fieldnames(outFields)';
+outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' '%s' '%s' '%s' '%d' '%s' '%d' '%.4f' '%.4f'};
+outFileData.data{ofCols.data} = trialBehaviors.data(outFieldIdxs);
+ensemble_display_table(outFileData,outFileParams);
+
+
 
 results = trialBehaviors;
 

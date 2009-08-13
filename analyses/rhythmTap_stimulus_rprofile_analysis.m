@@ -36,7 +36,7 @@ an{na}.params.verbose = 1;
 an{na}.name = 'rhythm profiler';
 an{na}.fun = @ipem_proc_series;
 an{na}.params = globals.stimIPEMParams;
-an{na}.params.glob.force_recalc = {};
+an{na}.params.glob.force_recalc = {'rp'};
 an{na}.params.glob.save_calc = {}; %not saving any
                                              %calculations for now
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
@@ -150,6 +150,6 @@ an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metada
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [4];
+params.run_analyses = [2];
 an = ensemble_jobman(an,params);
 return

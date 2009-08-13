@@ -1,5 +1,6 @@
 %analysis list for rhythmic tapping
 
+dateStr = strrep(date,'-','');
 
 globals = rhythmTap_globals; 
 
@@ -52,12 +53,13 @@ na=na+1;
 an{na}.name = 'behavioral_coding_analysis';
 an{na}.fun  = @behaviorCodingAnalysis;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
-an{na}.params.perform = {'parse_behaviors','save_behaviors'};
-an{na}.params.behaveTable_fname = 'behaveTable_5Aug2009.mat';
+an{na}.params.perform = {'load_behaviors'};% {'parse_behaviors','save_behaviors'}; %
+an{na}.params.behaveTable_fname = 'behaveTable_12Aug2009.mat';
 an{na}.params.behaveTable_path = '/data2/rhythm/rhythmic_tapping_v2/project_data';
 an{na}.params.behave_parser.behaveCodingPath = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/behavioral_coding/observer_codes_5Aug2009';
 an{na}.params.behave_parser.setDurations = 1;
-an{na}.params.behave_parser.log_fname = fullfile(globals.paths.logpath,'parser_behavioral_coding_errors.log');
+an{na}.params.behave_parser.log_fname = fullfile(globals.paths.logpath,['parser_behavioral_coding_errors_' dateStr '.log']);
+an{na}.params.outputTextFile = 'behaveCoding_matlabParsed_12Aug2009.txt';
 an{na}.params.behave_parser.expect.type = {'numeric'};
 an{na}.params.behave_parser.expect.expr = {' <= 35'};
 an{na}.params.behave_parser.expect.vars = {'Duration'};
