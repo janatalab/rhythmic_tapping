@@ -301,10 +301,9 @@ for iSub = 1:length(subIDList)
 	  behaviorsThisSub.data{behaveTableCols.Time}(behaviorIdxs);
       
       
-  end
-  
-
-end
+  end % for itrial=
+ 
+end % for iSub
 
 %%%%%%ASSIGN RHYTHMIC/NON-RHYTHMIC, BODY PART COLUMNS%%%%%
 

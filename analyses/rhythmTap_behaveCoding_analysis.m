@@ -70,6 +70,13 @@ an{na}.params.ignoreSubs = {'08bin87131','03mxv76151','11orj72111','03yus88141',
 an{na}.params.audioStartLog = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/behavioral_coding/audio_start_times.txt';
 an{na}.requires = {struct('name','ensemble_session_x_trial_info')};
 
-jmanParams.run_analyses = [3];
+na=na+1;
+an{na}.name = 'check_behave_coding';
+an{na}.fun  = @checkBehaveCoding;
+an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
+an{na}.requires = {struct('name','behavioral_coding_analysis')};
+
+
+jmanParams.run_analyses = [4];
 jmanParams.ensemble.conn_id = globals.ensemble.conn_id;
 an = ensemble_jobman(an,jmanParams);
