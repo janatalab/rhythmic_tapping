@@ -59,12 +59,14 @@ an{na}.params.behaveTable_path = '/data2/rhythm/rhythmic_tapping_v2/project_data
 an{na}.params.behave_parser.behaveCodingPath = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/behavioral_coding/observer_codes_5Aug2009';
 an{na}.params.behave_parser.setDurations = 1;
 an{na}.params.behave_parser.log_fname = fullfile(globals.paths.logpath,['parser_behavioral_coding_errors_' dateStr '.log']);
-an{na}.params.outputTextFile = 'behaveCoding_matlabParsed_12Aug2009.txt';
+an{na}.params.outputTextFile = 'behaveCoding_matlabParsed_17Aug2009.txt';
 an{na}.params.behave_parser.expect.type = {'numeric'};
 an{na}.params.behave_parser.expect.expr = {' <= 35'};
 an{na}.params.behave_parser.expect.vars = {'Duration'};
 an{na}.params.behave_parser.expect.behaviors = {'hand tapping'};
+an{na}.params.outputFormat = 'body_group_by_coder';
 an{na}.params.numPracticeTrials = 5;
+an{na}.params.timeResolution = 0.1;
 an{na}.params.secondTapeStartTrial = {'08bin87131',26};
 an{na}.params.ignoreSubs = {'08bin87131','03mxv76151','11orj72111','03yus88141','04nnt88141'};
 an{na}.params.audioStartLog = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tapping/v2/behavioral_coding/audio_start_times.txt';
@@ -76,7 +78,6 @@ an{na}.fun  = @checkBehaveCoding;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','behavioral_coding_analysis')};
 
-
-jmanParams.run_analyses = [4];
+jmanParams.run_analyses = [3];
 jmanParams.ensemble.conn_id = globals.ensemble.conn_id;
 an = ensemble_jobman(an,jmanParams);
