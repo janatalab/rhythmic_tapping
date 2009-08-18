@@ -2,6 +2,10 @@
 %
 % Generates figures associated with analyses of movement data
 %
+% Original version by P.J.
+%
+% 8/14/09 - S.T. changed 'body_group' tag to 'body_group_by_rhythm'
+%           to accomodate new body_group behavior category in globals
 
 LOAD_DATA = 1;
 RUN_ANALYSES = 1;
@@ -16,7 +20,7 @@ globals = rhythmTap_globals;
 % a single variable.  The various behavior groups are defined in
 % rhythmTap_globals.
 
-behavior_grouping_types = {'indiv','body_group','rhythmic_vs_non_rhythmic','misc'};
+behavior_grouping_types = {'indiv','body_group_by_rhythm','rhythmic_vs_non_rhythmic','misc'};
 use_behave_groups = [2 4];
 
 analysis_types.subject = {'sum_prop', ... % sum the proportion of time per stim
@@ -281,7 +285,7 @@ if GENERATE_FIGS
 	add_errorbars(bh,errorbar_data');
 
 	switch behave_group_tag
-	  case 'body_group'
+	  case 'body_group_by_rhythm'
 	    ymax = 1;
 	  case 'misc'
 	    ymax = 0.02;
