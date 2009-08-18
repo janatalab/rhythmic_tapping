@@ -17,7 +17,7 @@ highGrooveAttributeID = mysql_extract_data('table','attribute', ...
 stimGrooveData = mysql_extract_data('table','stimulus_x_attribute','attribute_id',[lowGrooveAttributeID{1},midGrooveAttributeID{1},highGrooveAttributeID{1}],'conn_id',params.ensemble.conn_id,'extract_flds',{'stimulus_id','attribute_id'});
 
 
-stimGroove = ensemble_init_data_struct;
+stimGsroove = ensemble_init_data_struct;
 stimGroove.vars = {'stimulus_id','groove_rating'};
 stimGrooveCols = set_var_col_const(stimGroove.vars);
 stimGroove.data{stimGrooveCols.stimulus_id} = ...
@@ -214,14 +214,31 @@ end
 
 %initialize the new data struct
 trialBehaviors = ensemble_init_data_struct;
-trialBehaviors.vars = {'stimulus_id','trial_id','trial_order', ...
+
+switch(params.outputFormat)
+ case 'one_behavior_per_line'
+  body_group_info = assign_behavior_info('body_group_by_rhythm');
+  trialBehaviors.vars = {'stimulus_id','trial_id','trial_order', ...
 		    'subject_id','stimulus_category', ...
-		    'tapping_condition','behavior','is_rhythmic','body_group','coder_id', ...
+		    'tapping_condition','behavior','body_group','coder_id', ...
 		    'behavior_proportion' 'coder_time' 'beh_prop_total' 'trial_start_stop' 'beh_start_stop'};
+ case  'body_group_by_coder'
+  body_group_info = assign_behavior_info('body_group');
+  nGroups = size(body_group_info,1);
+  trialBehaviors.vars = {'stimulus_id','trial_id','trial_order', ...
+		    'subject_id','stimulus_category', ...
+		    'tapping_condition'};
+  trialBehaviors.vars = {trialBehaviors.vars{:} body_group_info{:,1} 'coder_id', ...
+		    'coder_time' 'trial_start_stop'};
+  timeResolution = params.timeResolution;
+end
+  
 trialBehaviorCols = set_var_col_const(trialBehaviors.vars);
 trialBehaviors.data = cell(size(trialBehaviors.vars));
 
 subIDList = unique(behaveTable.data{behaveTableCols.Subject});
+coderIDs = unique(behaveTable.data{behaveTableCols.Event_Log_Num});
+nCoders = length(coderIDs);
 
 for iSub = 1:length(subIDList)
 
@@ -265,7 +282,16 @@ for iSub = 1:length(subIDList)
       
       %these behaviors were seen during this trial. Assign them to trialBehaviors
       behaviorIdxs = find( (subBehaviorStartTimes < trialEndTime) & (subBehaviorEndTimes > trialStartTime) );
-      numToAdd = length(behaviorIdxs);
+
+      switch(params.outputFormat)
+       case 'one_behavior_per_line'
+	numToAdd = length(behaviorIdxs);
+       case  'body_group_by_coder'
+	numToAdd = nCoders;
+	nCurrentRecords = length(trialBehaviors.data{trialBehaviorCols.stimulus_id});
+	coderIdxs = nCurrentRecords+1:nCurrentRecords+numToAdd;
+      end
+            
       trialBehaviors.data{trialBehaviorCols.tapping_condition}(end+1:end+numToAdd,1) ...
 	  = repmat({trialCondition},numToAdd,1);
       trialBehaviors.data{trialBehaviorCols.stimulus_category}(end+1:end+numToAdd,1) ...
@@ -277,93 +303,139 @@ for iSub = 1:length(subIDList)
       trialBehaviors.data{trialBehaviorCols.trial_order}(end+1:end+numToAdd,1) = ...
 	  repmat(thisTrialOrder,numToAdd,1);
       trialBehaviors.data{trialBehaviorCols.subject_id}(end+1:end+numToAdd,1)= repmat({thisSubjectID},numToAdd,1);
-      trialBehaviors.data{trialBehaviorCols.coder_id}(end+1:end+numToAdd,1) = behaviorsThisSub.data{behaveTableCols.Event_Log_Num}(behaviorIdxs);
-      trialBehaviors.data{trialBehaviorCols.behavior}(end+1:end+numToAdd,1) ...
-	  = behaviorsThisSub.data{behaveTableCols.Behavior}(behaviorIdxs);
-      
-            
-      useStarts = max(trialStartTime,subBehaviorStartTimes(behaviorIdxs));
-      useEnds = min(trialEndTime,subBehaviorEndTimes(behaviorIdxs));
-      proportionBehaviors = (useEnds - useStarts)./ (trialEndTime - trialStartTime);
-
-      proportionBehaviorsTotals = (subBehaviorEndTimes(behaviorIdxs) ...
-	  - subBehaviorStartTimes(behaviorIdxs))./ (trialEndTime - trialStartTime);
-      
-      trialBehaviors.data{trialBehaviorCols.behavior_proportion}(end+1:end+numToAdd,1) = proportionBehaviors;
-      trialBehaviors.data{trialBehaviorCols.beh_prop_total}(end+1:end+numToAdd,1) = proportionBehaviorsTotals;
-
       nRows = size(trialBehaviors.data{trialBehaviorCols.trial_start_stop},1);
       trialBehaviors.data{trialBehaviorCols.trial_start_stop}(nRows+1:nRows+numToAdd,1:2) = ...
 	  repmat([trialStartTime trialEndTime],numToAdd,1);
-      trialBehaviors.data{trialBehaviorCols.beh_start_stop}(nRows+1:nRows+numToAdd,1:2) = ...
-	  [subBehaviorStartTimes(behaviorIdxs) subBehaviorEndTimes(behaviorIdxs)];
-      trialBehaviors.data{trialBehaviorCols.coder_time}(end+1:end+numToAdd,1)=...
-	  behaviorsThisSub.data{behaveTableCols.Time}(behaviorIdxs);
       
+      switch(params.outputFormat)
+	
+       case 'one_behavior_per_line'
+
+	trialBehaviors.data{trialBehaviorCols.coder_id}(end+1:end+numToAdd,1) = behaviorsThisSub.data{behaveTableCols.Event_Log_Num}(behaviorIdxs);
+	trialBehaviors.data{trialBehaviorCols.behavior}(end+1:end+numToAdd,1) ...
+	    = behaviorsThisSub.data{behaveTableCols.Behavior}(behaviorIdxs);
+            
+	useStarts = max(trialStartTime,subBehaviorStartTimes(behaviorIdxs));
+	useEnds = min(trialEndTime,subBehaviorEndTimes(behaviorIdxs));
+	proportionBehaviors = (useEnds - useStarts)./ (trialEndTime - trialStartTime);
+	
+	proportionBehaviorsTotals = (subBehaviorEndTimes(behaviorIdxs) ...
+				     - subBehaviorStartTimes(behaviorIdxs))./ (trialEndTime - trialStartTime);
       
-  end % for itrial=
- 
-end % for iSub
+	trialBehaviors.data{trialBehaviorCols.behavior_proportion}(end+1:end+numToAdd,1) = proportionBehaviors;
+	trialBehaviors.data{trialBehaviorCols.beh_prop_total}(end+1:end+numToAdd,1) = proportionBehaviorsTotals;
 
-%%%%%%ASSIGN RHYTHMIC/NON-RHYTHMIC, BODY PART COLUMNS%%%%%
+	trialBehaviors.data{trialBehaviorCols.beh_start_stop}(nRows+1:nRows+numToAdd,1:2) = ...
+	    [subBehaviorStartTimes(behaviorIdxs) subBehaviorEndTimes(behaviorIdxs)];
+	trialBehaviors.data{trialBehaviorCols.coder_time}(end+1:end+numToAdd,1)=...
+	    behaviorsThisSub.data{behaveTableCols.Time}(behaviorIdxs);
+      
+       case 'body_group_by_coder'
+	
+	for iCoder = 1:nCoders
+	  thisCoderIdx = coderIdxs(iCoder);
+	  timeVector = trialStartTime:timeResolution:trialEndTime; 
+	  trialBehaviors.data{trialBehaviorCols.coder_id}(thisCoderIdx,1) = iCoder;
+	  coderFilt.include.all.Event_Log_Num = iCoder;
+	  behaviorsThisCoder = ensemble_filter(behaviorsThisSub,coderFilt);
+	  
+	  for ibg = 1:nGroups
+	    bgTag = body_group_info{ibg,1};
+	    bodyGroupIdxs = find(ismember(behaviorsThisCoder.data{behaveTableCols.Behavior},body_group_info{ibg,2}));
+	    nBehaviors = length(bodyGroupIdxs);
+	    timeMtx = repmat(timeVector,nBehaviors,1);
+	    behStartTimes = behaviorsThisCoder.data{behaveTableCols.dpTime}(bodyGroupIdxs);
+	    behStopTimes = behaviorsThisCoder.data{behaveTableCols.dpTime}(bodyGroupIdxs) ...
+		+  behaviorsThisCoder.data{behaveTableCols.Duration}(bodyGroupIdxs);
+	    
+	    %creating matrices of behavior start and stop
+            %times. Each row corresponds to a given behavior. The
+            %start and stop times are simply repeated so that we
+            %can create a true/false mask on a time grid
+	    behStartTimes = repmat(behStartTimes,1,size(timeVector,2));
+	    behStopTimes = repmat(behStopTimes,1,size(timeVector,2));	    
+	    timeMtxMask = ((timeMtx >= behStartTimes) & (timeMtx <= behStopTimes));
 
-%initialize the is_rhythmic variable to NaNs. If
-%any(isnan(is_rhythmic)) after assigning data to this variable,
-%then we are missing some behaviors in body_rhythmic_groups
-datasize = size(trialBehaviors.data{trialBehaviorCols.stimulus_id});
-trialBehaviors.data{trialBehaviorCols.is_rhythmic} = nan(datasize);
-trialBehaviors.data{trialBehaviorCols.body_group} = {};
+	    %time grid is squashed so that we have a simple
+            %true/false vector for the whole behavior group.
+	    timeMask = any(timeMtxMask);
 
-body_rhythmic_groups = assign_behavior_info('body_group');
-nbg = size(body_rhythmic_groups,1);
-behaviorList = trialBehaviors.data{trialBehaviorCols.behavior};
-
-%assign rhythmic/non-rhythmic column to body_rhythmic_groups
-for ibg = 1:nbg
-  
-  [rhythTag,remTok] = strtok(body_rhythmic_groups{ibg,1},',');
-  body_group = strtok(remTok,',');
-  
-  all_behavior_groups{ibg,1} = body_group;
-  all_behavior_groups{ibg,2} = rhythTag;
-  all_behavior_groups{ibg,3} = body_rhythmic_groups{ibg,2};
-end
-
-misc_groups = assign_behavior_info('misc');
-nmisc = size(misc_groups,1);
-nall = size(all_behavior_groups,1);
-all_behavior_groups(nall+1:nall+nmisc,1) = misc_groups(:,1);
-all_behavior_groups(nall+1:nall+nmisc,2) = repmat({'non_rhythmic'},nmisc,1);
-all_behavior_groups(nall+1:nall+nmisc,3) = misc_groups(:,2);
-
-nbg = size(all_behavior_groups,1);
-for ibg = 1:nbg
-  
-  behaviorsThisGroup = all_behavior_groups{ibg,3};
-  maskThisGroup = ismember(behaviorList,behaviorsThisGroup);
-  
-  body_group = all_behavior_groups{ibg,1};
-  rhythTag = all_behavior_groups{ibg,2};
-  
-  is_rhythmic = strcmp(rhythTag,'rhythmic');
-
-  %a little sanity check here to make sure we are only dealing with
-  %'rhythmic' and 'non_rhythmic' strings
-  if(~is_rhythmic && ~strcmp(rhythTag,'non_rhythmic'))
-    error(['Found behavior which is not rhythmic but ''non_rhythmic''' ...
-	   ' string did not match']);
+	    %time proportion is simply then the number of time
+            %samples which behavior was exhibited over all time samples 
+	    timeProp = sum(timeMask)./length(timeMask);
+	    trialBehaviors.data{trialBehaviorCols.(bgTag)}(thisCoderIdx,1) = timeProp;
+	    
+	  end
+	  
+	end
+      end
   end
   
-  trialBehaviors.data{trialBehaviorCols.is_rhythmic}(find(maskThisGroup),1) = is_rhythmic;
-  trialBehaviors.data{trialBehaviorCols.body_group}(find(maskThisGroup),1) = repmat({body_group},sum(maskThisGroup),1);
+
+end
+
+%%%%%%ASSIGN RHYTHMIC/NON-RHYTHMIC, BODY PART COLUMNS IF OUTPUTTING
+%ONE BEHAVIOR PER LINE %%%%%
+
+if(strcmp(params.outputFormat,'one_behavior_per_line'))
+
+  %initialize the is_rhythmic variable to NaNs. If
+  %any(isnan(is_rhythmic)) after assigning data to this variable,
+  %then we are missing some behaviors in body_rhythmic_groups
+  datasize = size(trialBehaviors.data{trialBehaviorCols.stimulus_id});
+  trialBehaviors.data{trialBehaviorCols.is_rhythmic} = nan(datasize);
+  trialBehaviors.data{trialBehaviorCols.body_group} = {};
+  
+  body_rhythmic_groups = assign_behavior_info('body_group_by_rhythm');
+  nbg = size(body_rhythmic_groups,1);
+  behaviorList = trialBehaviors.data{trialBehaviorCols.behavior};
+
+  %assign rhythmic/non-rhythmic column to body_rhythmic_groups
+  for ibg = 1:nbg
+  
+    [rhythTag,remTok] = strtok(body_rhythmic_groups{ibg,1},',');
+    body_group = strtok(remTok,',');
+  
+    all_behavior_groups{ibg,1} = body_group;
+    all_behavior_groups{ibg,2} = rhythTag;
+    all_behavior_groups{ibg,3} = body_rhythmic_groups{ibg,2};
+  end
+
+  misc_groups = assign_behavior_info('misc');
+  nmisc = size(misc_groups,1);
+  nall = size(all_behavior_groups,1);
+  all_behavior_groups(nall+1:nall+nmisc,1) = misc_groups(:,1);
+  all_behavior_groups(nall+1:nall+nmisc,2) = repmat({'non_rhythmic'},nmisc,1);
+  all_behavior_groups(nall+1:nall+nmisc,3) = misc_groups(:,2);
+
+  nbg = size(all_behavior_groups,1);
+  for ibg = 1:nbg
+  
+    behaviorsThisGroup = all_behavior_groups{ibg,3};
+    maskThisGroup = ismember(behaviorList,behaviorsThisGroup);
+    
+    body_group = all_behavior_groups{ibg,1};
+    rhythTag = all_behavior_groups{ibg,2};
+    
+    is_rhythmic = strcmp(rhythTag,'rhythmic');
+
+    %a little sanity check here to make sure we are only dealing with
+    %'rhythmic' and 'non_rhythmic' strings
+    if(~is_rhythmic && ~strcmp(rhythTag,'non_rhythmic'))
+      error(['Found behavior which is not rhythmic but ''non_rhythmic''' ...
+	     ' string did not match']);
+    end
+  
+    trialBehaviors.data{trialBehaviorCols.is_rhythmic}(find(maskThisGroup),1) = is_rhythmic;
+    trialBehaviors.data{trialBehaviorCols.body_group}(find(maskThisGroup),1) = repmat({body_group},sum(maskThisGroup),1);
    
+  end
+  
+
+  if(any(isnan(trialBehaviors.data{trialBehaviorCols.is_rhythmic})))
+    error('Did not match all behaviors to ''is_rhythmic'' property');
+  end
 end
-
-
-if(any(isnan(trialBehaviors.data{trialBehaviorCols.is_rhythmic})))
-  error('Did not match all behaviors to ''is_rhythmic'' property');
-end
-
 
 %%%%%% WRITE TO TEXT FILE %%%%%%
 
@@ -374,14 +446,21 @@ outFileData.vars = {'column_labels','column_formats','data'};
 ofCols = set_var_col_const(outFileData.vars);
 
 outFields = trialBehaviorCols;
-outFields = rmfield(outFields,{'trial_start_stop','beh_start_stop','coder_time'});
+outFieldNames = fieldnames(trialBehaviorCols);
+removeFields = intersect({'trial_start_stop','beh_start_stop','coder_time'},outFieldNames);
+outFields = rmfield(outFields,removeFields);
 outFieldIdxs = struct2array(outFields);
 outFileData.data{ofCols.column_labels} = fieldnames(outFields)';
-outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' '%s' '%s' '%s' '%d' '%s' '%d' '%.4f' '%.4f'};
+switch(params.outputFormat)
+ case 'one_behavior_per_line'
+  outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' '%s' '%s' '%s' '%d' '%s' '%d' '%.4f' '%.4f'};
+ case  'body_group_by_coder'
+  outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' ' %s' ' %s' '%.2f' '%.2f' '%.2f' '%.2f' '%.2f' ...
+		    '%.2f' '%.2f' '%.2f' ' %.2f' ' %.2f' ' %d' };
+end
+
 outFileData.data{ofCols.data} = trialBehaviors.data(outFieldIdxs);
 ensemble_display_table(outFileData,outFileParams);
-
-
 
 results = trialBehaviors;
 
