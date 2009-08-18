@@ -15,7 +15,7 @@ switch behave_group_tag
    behavior_info{1,2} = globals.behaviors.rhythmic.all;
    behavior_info{2,1} = 'non_rhythmic';
    behavior_info{2,2} = globals.behaviors.non_rhythmic.all;
-  case 'body_group'
+  case 'body_group_by_rhythm'
    subsets = {'rhythmic','non_rhythmic'};
    %subsets = {'rhythmic'};
    ng = 0;
@@ -30,6 +30,14 @@ switch behave_group_tag
        behavior_info{ng,2} = globals.behaviors.(setstr).(body_group);
      end
    end
+ case 'body_group'
+  body_group_list = fieldnames(globals.behaviors.body_groups);
+  for ibg = 1:length(body_group_list)
+    behavior_info{ibg,1} = body_group_list{ibg};
+    behavior_info{ibg,2} = globals.behaviors.body_groups.(body_group_list{ibg});
+  end
+  
+  
  case 'misc'
   behavior_info = repmat(globals.behaviors.misc',1,2);
  otherwise
