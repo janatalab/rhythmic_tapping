@@ -1,6 +1,7 @@
 % load_bert_data
 
 addpath('../analyses')
+addpath('../../rhythm_profiler/params')
 globals = rhythmTap_globals;
 
 fpath = fullfile(globals.paths.datapath,'bert');
@@ -62,7 +63,15 @@ end
 
 
 %% Plot the data
-[th,r] = cart2pol(data(:,cols.Nose_X)-mean(data(:,cols.Nose_X)),data(:,cols.Nose_Y)-mean(data(:,cols.Nose_Y)));
+[th,r] = cart2pol(data(:,cols.Nose_X)-mean(data(:,cols.Nose_X)),...
+    data(:,cols.Nose_Y)-mean(data(:,cols.Nose_Y)));
 tscale = data(:,1)/qtps;
-
+subplot(1,6,1)
 plot(tscale,r)
+
+
+
+
+
+
+
