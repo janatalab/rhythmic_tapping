@@ -65,6 +65,7 @@ an{na}.params.behave_parser.expect.expr = {' <= 35'};
 an{na}.params.behave_parser.expect.vars = {'Duration'};
 an{na}.params.behave_parser.expect.behaviors = {'hand tapping'};
 an{na}.params.outputFormat = 'body_group_by_coder';
+an{na}.params.outputResultToFile = 0;
 an{na}.params.numPracticeTrials = 5;
 an{na}.params.timeResolution = 0.1;
 an{na}.params.secondTapeStartTrial = {'08bin87131',26};
@@ -73,11 +74,25 @@ an{na}.params.audioStartLog = '/afs/cmb.ucdavis.edu/share/petrlab/rhythmic_tappi
 an{na}.requires = {struct('name','ensemble_session_x_trial_info')};
 
 na=na+1;
+an{na}.name = 'matchBERT2Annotated';
+an{na}.fun = @matchBERT2Annotated;
+an{na}.params.bertLogFile = 'be_tape_list_edited.csv';
+an{na}.params.bertPath = '/data2/rhythm/rhythmic_tapping_v2/BERT';
+an{na}.params.bertWavDir = 'BERT_wav';
+an{na}.params.annotWavDir = 'Annot_wav';
+an{na}.params.outPath = fullfile(an{na}.params.bertPath,'outPath');
+an{na}.params.nSyncSecs = 60;
+an{na}.params.Fs = 44100;
+an{na}.params.xcorrThresh = 0.5;
+an{na}.params.substituteSubID = {'08ana84041','08ana84081'};
+an{na}.requires = {struct('name','behavioral_coding_analysis')};
+
+na=na+1;
 an{na}.name = 'check_behave_coding';
 an{na}.fun  = @checkBehaveCoding;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','behavioral_coding_analysis')};
 
-jmanParams.run_analyses = [3];
+jmanParams.run_analyses = [4];
 jmanParams.ensemble.conn_id = globals.ensemble.conn_id;
 an = ensemble_jobman(an,jmanParams);

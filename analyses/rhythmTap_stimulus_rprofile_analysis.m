@@ -36,7 +36,7 @@ an{na}.params.verbose = 1;
 an{na}.name = 'rhythm profiler';
 an{na}.fun = @ipem_proc_series;
 an{na}.params = globals.stimIPEMParams;
-an{na}.params.glob.force_recalc = {'rp'};
+an{na}.params.glob.force_recalc = {'ani','rp'};
 an{na}.params.glob.save_calc = {}; %not saving any
                                              %calculations for now
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;

@@ -36,14 +36,26 @@ behaveTableFullPath = fullfile(params.behaveTable_path,params.behaveTable_fname)
 
 if(ismember('load_behaviors',params.perform))
   load(behaveTableFullPath,'behaveTable','behaveTableCols');
+  behaveTable.vars = {behaveTable.vars{:}};
+  behaveTableCols = set_var_col_const(behaveTable.vars);
+%  behaveTable.data{behaveTableCols.offset_from_dp} = repmat(NaN, ...
+	%					    length(behaveTable.data{behaveTableCols.Time}),1);
+  %behaveTable.data{behaveTableCols.tape_label} = repmat({''}, ...
+	%					    length(behaveTable.data{behaveTableCols.Time}),1);
+
 elseif(ismember('parse_behaviors',params.perform))
   %parse the behavior coding event logs
   bhParams = params.behave_parser;
   behaveTable = parser_behavioral_coding([],bhParams);
-  behaveTable.vars = {behaveTable.vars{:} 'dpTime'}; %add dpTime column
+  behaveTable.vars = {behaveTable.vars{:} 'dpTime'};
   behaveTableCols = set_var_col_const(behaveTable.vars);
   behaveTable.data{behaveTableCols.dpTime} = repmat(NaN, ...
 						    length(behaveTable.data{behaveTableCols.Time}),1);
+  behaveTable.data{behaveTableCols.offset_from_dp} = repmat(NaN, ...
+						    length(behaveTable.data{behaveTableCols.Time}),1);
+  %behaveTable.data{behaveTableCols.tape_label} = repmat({''}, ...
+%						  length(behaveTable.data{behaveTableCols.Time}),1);
+
   if(ismember('save_behaviors',params.perform))
     
     %the following saves the data that was parsed out from all the
@@ -133,6 +145,8 @@ for audLogIdx = 1:length(audioLog{1})
     
     if(tapeEntries(iTapeEntry).tape_num == 1)
 
+      %obtain the offset of the video recording relative to DP by
+      %looking at the start time of the first stim in each recording
       firstDPOffset = parsedTrialList.data{parsedTrialListCols.start_time_sec}(1);
       tapeEntries(iTapeEntry).offset_from_dp = firstDPOffset - tapeEntries(iTapeEntry).audio_start_time;
       
@@ -203,6 +217,11 @@ for audLogIdx = 1:length(audioLog{1})
 	behaveTable.data{behaveTableCols.Time}(behaveTableTapeIdxs,1) + ...
 	tapeEntries(iTapeEntry).offset_from_dp;
     
+    %record the offset from dp, so if we want to go back to video
+    %time, we can.
+    %behaveTable.data{behaveTableCols.offset_from_dp}(behaveTableTapeIdxs,1) = ...
+%	repmat(tapeEntries(iTapeEntry).offset_from_dp,sum(behaveTableTapeIdxs),1);
+    
     iTapeEntry = iTapeEntry + 1;
   end
   
@@ -221,7 +240,9 @@ switch(params.outputFormat)
   trialBehaviors.vars = {'stimulus_id','trial_id','trial_order', ...
 		    'subject_id','stimulus_category', ...
 		    'tapping_condition','behavior','body_group','coder_id', ...
-		    'behavior_proportion' 'coder_time' 'beh_prop_total' 'trial_start_stop' 'beh_start_stop'};
+		    'behavior_proportion' 'coder_time' 'beh_prop_total' ...
+		    'trial_start_stop' 'beh_start_stop' 'offset_from_dp' ...
+		   'tape_label'};
  case  'body_group_by_coder'
   body_group_info = assign_behavior_info('body_group');
   nGroups = size(body_group_info,1);
@@ -229,7 +250,8 @@ switch(params.outputFormat)
 		    'subject_id','stimulus_category', ...
 		    'tapping_condition'};
   trialBehaviors.vars = {trialBehaviors.vars{:} body_group_info{:,1} 'coder_id', ...
-		    'coder_time' 'trial_start_stop'};
+		    'coder_time' 'trial_start_stop' 'offset_from_dp' ...
+		   'tape_label'};
   timeResolution = params.timeResolution;
 end
   
@@ -248,11 +270,15 @@ for iSub = 1:length(subIDList)
   tmpFilt.include.all.Subject = {thisSubjectID};
   behaviorsThisSub = ensemble_filter(behaveTable,tmpFilt);
   
- 
+  %NOTE THAT WE ARE RECORDING BEHAVIOR START AND STOP TIMES IN
+  %DIGITAL PEFORMER RELATIVE TIME, RATHER THAN TIME RELATIVE TO THE
+  %VIDEO. THIS IS OK, BECAUSE WE ARE ALSO RECORDING TRIAL START AND
+  %STOP TIMES RELATIVE TO DP. HOWEVER, THIS IS IMPORTANT IF ONE
+  %WANTS TO PARSE THE ACTUAL VIDEO RECORDING
   subBehaviorStartTimes = behaviorsThisSub.data{behaveTableCols.dpTime};
   subBehaviorEndTimes = behaviorsThisSub.data{behaveTableCols.dpTime} ...
       + behaviorsThisSub.data{behaveTableCols.Duration};
-						  
+	
   %get the list of trials for this subject
   clear tmpFilt
   tmpFilt.include.all.subject_id = {thisSubjectID};
@@ -306,7 +332,28 @@ for iSub = 1:length(subIDList)
       nRows = size(trialBehaviors.data{trialBehaviorCols.trial_start_stop},1);
       trialBehaviors.data{trialBehaviorCols.trial_start_stop}(nRows+1:nRows+numToAdd,1:2) = ...
 	  repmat([trialStartTime trialEndTime],numToAdd,1);
+
+      %find out which tape this trial was on, and add the
+      %offset_from_dp to it. We could have done this from the
+      %behaviorsThisSub struct, but not all trials have behavior
+      %info
+      tapesThisSub = strmatch(thisSubjectID,{tapeEntries(:).subject_id});
+      nTapes = length(tapesThisSub);
+      for iTape = 1:nTapes
+	
+	trialTapeTime = trialStartTime - tapeEntries(tapesThisSub(iTape)).offset_from_dp;
+	if((trialTapeTime < tapeEntries(tapesThisSub(iTape)).tape_dur) ...
+	   && (trialTapeTime > 0) )
+	  offsetThisTrial = tapeEntries(tapesThisSub(iTape)).offset_from_dp;
+	  tapeLabel = tapeEntries(tapesThisSub(iTape)).tape_label;
+	end
+      end
       
+      trialBehaviors.data{trialBehaviorCols.offset_from_dp}(nRows+1:nRows+numToAdd,1) = ...
+	  repmat(offsetThisTrial,numToAdd,1);
+      trialBehaviors.data{trialBehaviorCols.tape_label}(nRows+1:nRows+numToAdd,1) = ...
+	  repmat({tapeLabel},numToAdd,1);
+         
       switch(params.outputFormat)
 	
        case 'one_behavior_per_line'
@@ -439,28 +486,31 @@ end
 
 %%%%%% WRITE TO TEXT FILE %%%%%%
 
-outFileParams.fname = fullfile(params.behaveTable_path,params.outputTextFile);
-outFileParams.write2file = 1;
+if(params.outputResultToFile)
+  outFileParams.fname = fullfile(params.behaveTable_path,params.outputTextFile);
+  outFileParams.write2file = 1;
 
-outFileData.vars = {'column_labels','column_formats','data'};
-ofCols = set_var_col_const(outFileData.vars);
+  outFileData.vars = {'column_labels','column_formats','data'};
+  ofCols = set_var_col_const(outFileData.vars);
 
-outFields = trialBehaviorCols;
-outFieldNames = fieldnames(trialBehaviorCols);
-removeFields = intersect({'trial_start_stop','beh_start_stop','coder_time'},outFieldNames);
-outFields = rmfield(outFields,removeFields);
-outFieldIdxs = struct2array(outFields);
-outFileData.data{ofCols.column_labels} = fieldnames(outFields)';
-switch(params.outputFormat)
- case 'one_behavior_per_line'
-  outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' '%s' '%s' '%s' '%d' '%s' '%d' '%.4f' '%.4f'};
- case  'body_group_by_coder'
-  outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' ' %s' ' %s' '%.2f' '%.2f' '%.2f' '%.2f' '%.2f' ...
+  outFields = trialBehaviorCols;
+  outFieldNames = fieldnames(trialBehaviorCols);
+  removeFields = intersect({'trial_start_stop','beh_start_stop','coder_time'},outFieldNames);
+  outFields = rmfield(outFields,removeFields);
+  outFieldIdxs = struct2array(outFields);
+  outFileData.data{ofCols.column_labels} = fieldnames(outFields)';
+  switch(params.outputFormat)
+   case 'one_behavior_per_line'
+    outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' '%s' '%s' '%s' '%d' '%s' '%d' '%.4f' '%.4f'};
+   case  'body_group_by_coder'
+    outFileData.data{ofCols.column_formats} = {'%d' '%d' '%d' '%s' ' %s' ' %s' '%.2f' '%.2f' '%.2f' '%.2f' '%.2f' ...
 		    '%.2f' '%.2f' '%.2f' ' %.2f' ' %.2f' ' %d' };
+  end
+  
+  outFileData.data{ofCols.data} = trialBehaviors.data(outFieldIdxs);
+  ensemble_display_table(outFileData,outFileParams);
 end
 
-outFileData.data{ofCols.data} = trialBehaviors.data(outFieldIdxs);
-ensemble_display_table(outFileData,outFileParams);
 
 results = trialBehaviors;
 
