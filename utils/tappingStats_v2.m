@@ -149,7 +149,6 @@ end
 
 return
 
-
 %find the number of peaks in ioiHist
 function num_peaks = numPeaks(ioiHist)
 
@@ -181,11 +180,6 @@ end
 
 
 return
-
-
-
-
-
 
 %calculate the standard deviation of iois in some range
 function result = stdAboutPeak(ioi,range)

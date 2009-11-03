@@ -19,7 +19,7 @@ if(ismember('calcMeans',params.process))
   meanEnergies = ensemble_init_data_struct;
   meanEnergies.type = 'mean_energies';
   meanEnergies.name = 'mean_energies_by_trial_and_subject';
-  meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'tapping_stats' 'stimulus_category' ...
+  meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'norm_tapping_stats' 'tapping_stats' 'stimulus_category' ...
 		    'artist' 'song_name' 'meanEnergy' 'stdEnergy' ...
 		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths','meanVMPrediction','meanVMViolation','meanVMTimingDev','varVMPrediction','varVMViolation','varVMTimingDev','meanCoherence','varCoherence'};
 
@@ -69,7 +69,7 @@ for iSess = 1:length(sessIDs)
   nTrials = length(thisSessTrials.data{trialInfoCols.trial_id});
   
   for iTrial = 1:nTrials
-
+  
     filename = sprintf('%s_%d_trial_%d.mat',thisSubjectID,thisSessionID,iTrial);
     filepath = fullfile(params.savePath,filename);
     
@@ -87,7 +87,7 @@ for iSess = 1:length(sessIDs)
     thisTrialStructCols = set_var_col_const(thisTrialStruct.vars);
     
     thisTapCond = thisTrialStruct.data{thisTrialStructCols.tapping_condition}{1};
-    thisTapStats = thisTrialStruct.data{thisTrialStructCols.tapping_stats}{1};
+    %thisTapStats = thisTrialStruct.data{thisTrialStructCols.tapping_stats}{1};
     thisStimCat = thisTrialStruct.data{thisTrialStructCols.stimulus_category}{1};
     thisStimulusID = thisTrialStruct.data{thisTrialStructCols.stimulus_id};
     
@@ -124,7 +124,6 @@ for iSess = 1:length(sessIDs)
 	thisTrialStruct.data{thisTrialStructCols.(thisProc)}{1} = ipemOut.data{ipemOutCols.(thisProc)}{1};
       end
     
-  
       if(isfield(params,'savePath') && params.saveCalc)
 	save(filepath,'thisSessionID','thisExperimentID','thisSubjectID','thisTrialStruct','thisTapCond','thisStimCat','thisArtist','thisSongName');
       end
@@ -132,16 +131,14 @@ for iSess = 1:length(sessIDs)
       load(filepath);
     end
     
-    %if params.getTappingStats was set, process it here
-    if(ismember('recalcTappingStats',params.process))
-      midiInfo = thisTrialStruct.data{thisTrialStructCols.midi_resp}{1};
-      midiInfoCols = set_var_col_const(midiInfo.vars);
-      tappingStatsParams = params.tapping_stats;
-      tappingStatsParams = params.tapping_stats;
-      thisTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
-      thisTrialStruct.data{thisTrialStructCols.tapping_stats}{1} = thisTapStats;
-    end
-    
+    %recalculate tapping stats. We want both normalized and non-normalized stats
+    midiInfo = thisTrialStruct.data{thisTrialStructCols.midi_resp}{1};
+    midiInfoCols = set_var_col_const(midiInfo.vars);
+    tappingStatsParams = params.tapping_stats;
+    tappingStatsParams.normalizeByPeakIOI = 1;
+    thisNormTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
+    tappingStatsParams.normalizeByPeakIOI = 0;
+    thisTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
     
     if(ismember('calcMeans',params.process))
      
@@ -169,8 +166,6 @@ for iSess = 1:length(sessIDs)
 	normPeakFreqs = peakInfo.data{peakInfoCols.normPeakFreq};
 	peakWidths = peakInfo.data{peakInfoCols.width};
 	
-	peakIdxs = find_peaks(meanResonEnergy,params.peakFinder);
-	peakFreqs = resonFreqs(peakIdxs);
 	peakWidths = get_rp_peakWidths('rpEnergy',meanResonEnergy,...
 						  'peakFreqs',peakFreqs,...
 						  'resonFreqs',resonFreqs);
@@ -198,8 +193,9 @@ for iSess = 1:length(sessIDs)
 	meanEnergies.data{meCols.subject_id}{meIdx,1} = thisSubjectID;
 	meanEnergies.data{meCols.stimulus_id}(meIdx,1) = thisStimulusID;
 	meanEnergies.data{meCols.trial_order}(meIdx,1) = iTrial;
-	meanEnergies.data{meCols.tapping_cond}{meIdx,1}  =thisTapCond;
-	meanEnergies.data{meCols.tapping_stats}{meIdx,1} =thisTapStats;
+	meanEnergies.data{meCols.tapping_cond}{meIdx,1}  = thisTapCond;
+	meanEnergies.data{meCols.tapping_stats}{meIdx,1} = thisTapStats;
+	meanEnergies.data{meCols.norm_tapping_stats}{meIdx,1} = thisNormTapStats;
 	meanEnergies.data{meCols.stimulus_category}{meIdx,1} = thisStimCat;
 	meanEnergies.data{meCols.artist}{meIdx,1} = thisArtist;
 	meanEnergies.data{meCols.song_name}{meIdx,1} = thisSongName;
@@ -222,7 +218,7 @@ end
 
 if(ismember('calcMeans',params.process) && isfield(params,'savePath') ...
    && params.saveCalc)
-  meanEnergyPath = fullfile(params.savePath,'meanEnergies_peakWidths_byTrialSub_normIOI.mat');
+  meanEnergyPath = fullfile(params.savePath,params.fname);
   save(meanEnergyPath,'meanEnergies','params');
 end
 
