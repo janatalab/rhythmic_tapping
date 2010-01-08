@@ -93,6 +93,6 @@ an{na}.fun  = @checkBehaveCoding;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','behavioral_coding_analysis')};
 
-jmanParams.run_analyses = [4];
+jmanParams.run_analyses = [3];
 jmanParams.ensemble.conn_id = globals.ensemble.conn_id;
 an = ensemble_jobman(an,jmanParams);

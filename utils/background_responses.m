@@ -3,7 +3,7 @@ function outData = background_responses(inData,params)
 % right now this function just calculates percentage of subs with
 % >=2 and >=5 yrs musical training. It can be expanded later to do more
 
-form_name_defs;
+form_id_const = make_form_name_defs;
 
 %clear searchCrit;
 %searchCrit.name = 'response_data';
@@ -24,11 +24,12 @@ bkdResps = ensemble_filter(respInfo,tmpFilt);
 
 numYrs = str2num(char(bkdResps.data{end}));
 
-gt2 = sum(numYrs >=2);
+gt2lt5 = sum(numYrs >=2 & numYrs < 5);
 gt5 = sum(numYrs >=5);
 
-
-
+fprintf('\n\nNumber of subjects reporting: %d\n',length(numYrs));
+fprintf('nSubs with 2-4 years musical experience: %d\n',gt2lt5);
+fprintf('nSubs with >= 5 years musical experience: %d\n',gt5);
 
 outData = [];
 

@@ -66,6 +66,8 @@ an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.params.summaryByTrialCond = {}; %{'iso_tap'}; %set this to obtain summary stats bystim ID
 an{na}.params.getTappingStats = 1;
 an{na}.params.tapping_stats = globals.tapping_stats;
+%WHY WERE THESE COMMENTED OUT? NEED TO VERIFY THAT THEY WEREN'T COMMENTED ON
+%EARLIER RUNS
 %an{na}.params.tapping_stats.midi = globals.midi;
 %an{na}.params.tapping_stats.normalizeByPeakIOI = 1;
 %an{na}.params.tapping_stats.ioiMinThresh = 0.050;
@@ -207,6 +209,6 @@ an{na}.requires = {};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [1];
+params.run_analyses = [3];
 an = ensemble_jobman(an,params);
 return
