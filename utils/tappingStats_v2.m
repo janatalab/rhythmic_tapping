@@ -7,10 +7,19 @@ function tapping_stats = tappingStats_v2(midiInfo,params)
 %
 % 15 Dec, 2006 first version, S.T.
 
-if(~isfield(params,'normalizeByPeakIOI'))
-  params.normalizeByPeakIOI = 0;
+try
+  params.normalizeBy;
+catch
+  params.normalizeBy = '';
 end
 
+if(strcmp(params.normalizeBy,'peakITI'))
+  %dealing with backwards compatibility with params.normalizeByPeakIOI
+  %this is no longer used. Instead set params.normalizeBy = 'peakITI'
+  params.normalizeByPeakIOI = 1;
+else
+  params.normalizeByPeakIOI = 0;
+end
 
 midiInfoCols = set_var_col_const(midiInfo.vars);
 
@@ -21,7 +30,7 @@ tapping_stats_cols = set_var_col_const(tapping_stats.vars);
 tapping_stats.data{tapping_stats_cols.params} = params;
 
 tsHand = ensemble_init_data_struct;
-tsHand.vars = {'ioi','ioi_hist','hist_bin_size','hist_bin_centers','var_about_peak','num_peaks'};
+tsHand.vars = {'ioi','ioi_hist','hist_bin_size','hist_bin_centers','var_about_peak','std','num_peaks'};
 tsHandCols = set_var_col_const(tsHand.vars);
 
 for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.right]
@@ -53,33 +62,49 @@ if(~isempty(nmat))
   ioiRight = diff(rightHand_nmat(:,6),1,1);
   ioiRight(find(ioiRight < params.ioiMinThresh)) = [];
 
+  if(strcmp(params.normalizeBy,'mean'))
+    ioiBoth = ioiBoth ./ mean(ioiBoth);
+    ioiLeft = ioiLeft ./ mean(ioiLeft);
+    ioiRight = ioiRight ./ mean(ioiRight);
+  end
+  
 else
   ioiBoth = [];
   ioiLeft = [];
   ioiRight = [];
 end
 
-tapping_stats.data{tapping_stats_cols.both}.data{tsHandCols.ioi} = ioiBoth;
-tapping_stats.data{tapping_stats_cols.left}.data{tsHandCols.ioi} = ioiLeft;
-tapping_stats.data{tapping_stats_cols.right}.data{tsHandCols.ioi} = ioiRight;
+%tapping_stats.data{tapping_stats_cols.both}.data{tsHandCols.ioi} = ioiBoth;
+%tapping_stats.data{tapping_stats_cols.left}.data{tsHandCols.ioi} = ioiLeft;
+%tapping_stats.data{tapping_stats_cols.right}.data{tsHandCols.ioi} = ioiRight;
 
 %process all hand combos (both, left, and right)
 for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.right]
 
   %initialize the distribution vector for each calculation
   distributionVector = [params.ioiHistBinLim(1):params.ioiHistBinSize:params.ioiHistBinLim(2)];
+ 
   
-  handStats = tapping_stats.data{iHand};
+  %handStats = tapping_stats.data{iHand};
+  %ioi = handStats.data{tsHandCols.ioi};
+
+  switch(iHand)
+   case tapping_stats_cols.both
+    ioi = ioiBoth;
+   case tapping_stats_cols.left
+    ioi = ioiLeft;
+   case tapping_stats_cols.right
+    ioi = ioiRight;
+  end %switch
+ 
+  %only use iois that are within histBinLims
+  ioiUse = ioi;
+  ioiUse(find( ioiUse < min(distributionVector) | ioiUse > max(distributionVector))) = [];
   
-  ioi = handStats.data{tsHandCols.ioi};
-  
-  %get rid of iois that are outside of histBinLims
-  ioi(find( ioi < min(distributionVector) | ioi > max(distributionVector))) = [];
-  
-  if(~isempty(ioi))
-    ioiHist = hist(ioi,distributionVector);
+  if(~isempty(ioiUse))
+    ioiHist = hist(ioiUse,distributionVector);
   else
-    ioiHist = zeros(size(distributionVector));;
+    ioiHist = zeros(size(distributionVector));
   end
   
   peakIdx = find(ioiHist == max(ioiHist));
@@ -105,14 +130,18 @@ for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.
 
   histBinSize = abs(distributionVector(2) - distributionVector(1));
   
-  %if normalizing, then scale the iois by the peak ioi and
-  %recalculate the histogram
+  %if normalizing by peakIOI, then scale the iois by the peak ioi and
+  %recalculate the histogram. We will use all iois to scale, then throw out
+  %those that are outside of hist limits
   if(params.normalizeByPeakIOI && ~isempty(ioi))
+
     %now normalize by the peakIOI
     ioi = ioi./peakIOI;
+    ioiUse = ioi;
     
     %get rid of iois that are outside of histBinLims
-    ioi(find( ioi < min(distributionVector) | ioi > max(distributionVector))) = [];
+    
+    ioiUse(find( ioiUse < min(distributionVector) | ioiUse > max(distributionVector))) = [];
     
     %we've scaled the ioi's by the peakIOI (thereby normalizing them)
     %we'll leave distributionVector alone use it as is. It's
@@ -121,22 +150,25 @@ for iHand = [tapping_stats_cols.both tapping_stats_cols.left tapping_stats_cols.
     %distributionVectors of all the calculations to be the same, so
     %that we can easily compare normalized histograms.
     
-    ioiHist = hist(ioi,distributionVector);
+    ioiHist = hist(ioiUse,distributionVector);
     stdCenter = 1;
     stdRange = params.stdev.range;
     
-  elseif(~params.normalizeByPeakIOI && ~isempty(ioi))
+  elseif(~params.normalizeByPeakIOI && ~isempty(ioiUse))
     stdCenter = peakIOI;
     stdNBins = params.stdev.nBins;
     stdRange = [(stdCenter - stdNBins*histBinSize) (stdCenter + stdNBins*stdNBins)];
   end
   
+  handStats = tapping_stats.data{iHand};
+  handStats.data{tsHandCols.ioi} = ioiUse;
   handStats.data{tsHandCols.ioi_hist} = ioiHist;
   handStats.data{tsHandCols.hist_bin_centers} = distributionVector;
   handStats.data{tsHandCols.hist_bin_size} = histBinSize;
- 
-  if(~isempty(ioi))
-    handStats.data{tsHandCols.var_about_peak} = stdAboutPeak(ioi,stdRange);
+  handStats.data{tsHandCols.std} = std(ioiUse);
+  
+  if(~isempty(ioiUse))
+    handStats.data{tsHandCols.var_about_peak} = stdAboutPeak(ioiUse,stdRange);
   else
     handStats.data{tsHandCols.var_about_peak} = 0;
   end

@@ -96,8 +96,9 @@ na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
 an{na}.params.process = {'calcRP','calcMeans','recalcTappingStats'};
+%an{na}.params.filt.include.all.subject_id = {'01shr85151'};%'08led84281'}; %04eee88251'}; %for inspecting specific subjects
 an{na}.params.savePath = globals.paths.resp_rp_path;
-an{na}.params.fname = 'meanEnergies_peakWidths_byTrialSub_28Oct2009.mat';
+an{na}.params.fname = 'meanEnergies_peakWidths_byTrialSub_28Jan2010.mat';
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
 an{na}.params.nmat2aud.padStop = 0;
@@ -107,7 +108,9 @@ an{na}.params.nmat2aud.scaleByVelocity = 1;
 an{na}.params.tapping_stats = globals.tapping_stats;
 an{na}.params.ipem_proc = globals.respIPEMParams;
 %param for running coherence calc
-an{na}.params.ipem_proc.rp.perform.calcTemporalExpect = 1;
+an{na}.params.ipem_proc.rp.perform.interpMPP = 1;
+an{na}.params.ipem_proc.rp.perform.calcOnsetInfo = 1;
+an{na}.params.ipem_proc.rp.perform.calcComplexOutput = 1;
 an{na}.params.ipem_proc.rp.perform.calcVonMises = 1;
 an{na}.params.ipem_proc.rp.perform.calcPhaseCoherence = 1;
 an{na}.params.storeIpemProc = {'rp'};
@@ -147,7 +150,7 @@ an{na}.params.plot.color = 0;
 an{na}.params.plot.separatePages = 0;
 an{na}.params.plot.savePlot = 1;
 an{na}.params.plot.savePath = ...
-    fullfile(globals.paths.resp_rp_plotPath,'all_subs_by_stimulus');
+    fullfile(globals.paths.resp_rp_plotPath,'all_subs_by_stimulus_20Jan2010');
 an{na}.params.plot.timeTickRes = 2.0;
 an{na}.params.plot.xminortick = 'off';
 an{na}.params.plot.numResonTicks = 8;
@@ -179,7 +182,7 @@ an{na}.params.plot.plotStd  = [1 1 0];
 an{na}.params.plot.numResonTicks = 15;
 an{na}.params.savePlot = 1;
 an{na}.params.savePath = fullfile(globals.paths.resp_rp_plotPath,'mmp_resp_vs_stim');
-an{na}.params.filename = 'mpp_resp_vs_stim_29Jul2009';
+an{na}.params.filename = 'mpp_resp_vs_stim_23Jan2010';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','midiResp_rhythm_profiler','type','mean_energies')};
 
 na=na+1; %8
@@ -187,7 +190,7 @@ an{na}.name = 'corr_resp_vs_stim';
 an{na}.fun = @corr_resp_vs_stim;
 an{na}.params.sets = {'free_form_tap' 'iso_tap'};
 an{na}.params.silence_stimID = 6497;
-an{na}.params.plotFname = 'corr_meanResp_vs_stim_01Aug.ps';
+an{na}.params.plotFname = 'corr_meanResp_vs_stim_24Jan2010.ps';
 an{na}.params.plotPath = '/data2/rhythm/rhythmic_tapping_v2/plots/resp_rp/mmp_resp_vs_stim';
 an{na}.params.plot.plotOverall = 1;
 an{na}.params.plot.plotByStim = 0;
@@ -209,6 +212,6 @@ an{na}.requires = {};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [3];
+params.run_analyses = [5];
 an = ensemble_jobman(an,params);
 return

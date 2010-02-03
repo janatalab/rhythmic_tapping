@@ -7,6 +7,8 @@ function outData = plot_resp_meanRhythmProfile_byStimID_v2(inData,params)
 % assumes that the stimulus is the first RP, so label order should
 % be set accordingly
 %
+% Also exports the mean MPP corresponding to each stim and tap condition
+%
 % 18 July 2007, Stefan Tomic
 % 29 July 2009, PJ - enabled restriction to desired stims
 
@@ -139,9 +141,11 @@ for iStim = 1:length(stimIDs)
     minEnergy = min(meanMEnergy);
     maxThisPlot = max(maxEnergy,maxThisPlot);
     minThisPlot = min(minEnergy,minThisPlot);
+    
+    %exporting the mean MPP for this stim and tap condition
     exportRP.data{exportRPCols.(thisTapCond{1})}(iStim,:) = meanMEnergy;
     
-  end
+  end %for iTapCond
  
   %obtain the stimulus RP
   if(~strcmp(thisStimCat,'silence'))
@@ -275,7 +279,9 @@ for iStim = 1:length(stimIDs)
     
   if(params.savePlot)
     if(confirmOverwrite)
-      print(plotFname,'-dpsc2','-append','-adobecset','-painters');
+      %painters mode seems to mess up the colors used by jbfill method of
+      %plotting stdev
+      print(plotFname,'-dpng','-append');
     end
     delete(figh);
   end

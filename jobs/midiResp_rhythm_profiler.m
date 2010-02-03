@@ -14,19 +14,20 @@ function outData = midiResp_rhythm_profiler(inData,params)
 %not supporting searching/loading of rp with specified params sets yet
 %matching is done by checking trial order in the session.
 
+storeIpemProc = params.storeIpemProc;
+  
 if(ismember('calcMeans',params.process))
   %data struct for mean resonEnergies 
   meanEnergies = ensemble_init_data_struct;
   meanEnergies.type = 'mean_energies';
   meanEnergies.name = 'mean_energies_by_trial_and_subject';
-  meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'norm_tapping_stats' 'tapping_stats' 'stimulus_category' ...
+  meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'norm_by_peakITI_tapping_stats' 'norm_by_mean_tapping_stats' 'tapping_stats' 'stimulus_category' ...
 		    'artist' 'song_name' 'meanEnergy' 'stdEnergy' ...
 		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths','meanVMPrediction','meanVMViolation','meanVMTimingDev','varVMPrediction','varVMViolation','varVMTimingDev','meanCoherence','varCoherence'};
 
   meCols = set_var_col_const(meanEnergies.vars);
   meIdx = 1;
 end
-
 
 if(~isfield(params,'process'))
   params.process = {'calcRP'};
@@ -48,8 +49,15 @@ findIdx = ensemble_find_analysis_struct(inData,searchCrit);
 sessTrials = inData{findIdx};
 sessTrialsCols = set_var_col_const(sessTrials.vars);
 
+%filter all trial info with filter settings in params.
+if(isfield(params,'filt'))
+  clear tmpFilt
+  tmpFilt = params.filt;
+  sessTrials = ensemble_filter(sessTrials,tmpFilt);
+end
+
 sessIDs = sessTrials.data{sessTrialsCols.session_id};
-storeIpemProc = params.storeIpemProc;
+
 
 for iSess = 1:length(sessIDs)
 
@@ -135,10 +143,14 @@ for iSess = 1:length(sessIDs)
     midiInfo = thisTrialStruct.data{thisTrialStructCols.midi_resp}{1};
     midiInfoCols = set_var_col_const(midiInfo.vars);
     tappingStatsParams = params.tapping_stats;
-    tappingStatsParams.normalizeByPeakIOI = 1;
-    thisNormTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
-    tappingStatsParams.normalizeByPeakIOI = 0;
+    tappingStatsParams.normalizeBy = 'mean';
+    thisNormByMeanTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
+    tappingStatsParams.normalizeBy = 'peakITI';
+    thisNormByPeakTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
+    tappingStatsParams.normalizeBy = '';
     thisTapStats = tappingStats_v2(midiInfo,tappingStatsParams);
+    
+    
     
     if(ismember('calcMeans',params.process))
      
@@ -195,7 +207,8 @@ for iSess = 1:length(sessIDs)
 	meanEnergies.data{meCols.trial_order}(meIdx,1) = iTrial;
 	meanEnergies.data{meCols.tapping_cond}{meIdx,1}  = thisTapCond;
 	meanEnergies.data{meCols.tapping_stats}{meIdx,1} = thisTapStats;
-	meanEnergies.data{meCols.norm_tapping_stats}{meIdx,1} = thisNormTapStats;
+	meanEnergies.data{meCols.norm_by_peakITI_tapping_stats}{meIdx,1} = thisNormByPeakTapStats;
+	meanEnergies.data{meCols.norm_by_mean_tapping_stats}{meIdx,1} = thisNormByMeanTapStats;
 	meanEnergies.data{meCols.stimulus_category}{meIdx,1} = thisStimCat;
 	meanEnergies.data{meCols.artist}{meIdx,1} = thisArtist;
 	meanEnergies.data{meCols.song_name}{meIdx,1} = thisSongName;

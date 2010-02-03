@@ -1,5 +1,12 @@
 function outData = corr_resp_vs_stim(inData,params)
-
+%
+% plots histograms of correlations between mpps of stimuli and mpps of tapping
+% (both tapping corresponding to the stimuli and tapping from other trials).
+% this illustrates that mpps of tapping correlate better to mpps of stimuli
+% that were listened to than to other stimuli
+%
+% Aug. 2009 - Stefan Tomic
+  
 try plotOverall = params.plot.plotOverall; catch plotOverall = 1; end
 try plotByStim = params.plot.plotByStim; catch plotByStim = 0; end
 
@@ -56,8 +63,13 @@ if plotOverall
     hist_spacing = [-1:0.1:1];
     % Get all the correlations that are off the diagonal and generate a
     % histogram
-    other_corrs = tril(corrmat(:,:,iSet),-1);
-    other_corrs = other_corrs(find(tril(ones(size(other_corrs)),-1)));
+    %other_corrs = tril(corrmat(:,:,iSet),-1);
+    %other_corrs = other_corrs(find(tril(ones(size(other_corrs)),-1)));
+    
+    not_diag_mask = ~eye(nStims);
+    other_corrs = corrmat(:,:,iSet);
+    other_corrs = other_corrs(not_diag_mask);
+    
     other_hist = hist(other_corrs,hist_spacing)';
 
     % Values on diagonals are correlations with the same stims

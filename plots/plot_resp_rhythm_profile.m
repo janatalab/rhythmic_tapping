@@ -22,7 +22,7 @@ stimulusMetadata = inData{stimulusMetadataIdx};
 stimulusMetadataCols = set_var_col_const(stimulusMetadata.vars);
 
 rpPath = params.rpPath;
-rpPathList = dir(fullfile(rpPath,'*trial*.mat'));
+rpPathList = dir(fullfile(rpPath,'*trial_*.mat'));
 rpFnames = {rpPathList.name};
 
 %filter out the session list to include only the ones we want to plot
