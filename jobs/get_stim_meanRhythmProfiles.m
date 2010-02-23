@@ -1,26 +1,24 @@
-function outData = get_stim_meanRhythmProfiles(inData,params)
+function outData = get_stim_summaryMeasurements(inData,params)
 %
+% Was get_stim_meanRhythmProfile.m. Returns summary measurements for each stim
+% (e.g. npeaks, complex_simple, mean-var-Coherence, etc.)
 %
-
+% If any additional summary measurements are desired, they may be added here
+% instead of in a post-processing script.
+%
+% 2/23/10 - renamed function and added timing expectancy calculations
+  
 ensemble_globals;
 
   
 meanResEnergy = ensemble_init_data_struct;
-meanResEnergy.vars = {'stimulus_id' 'artist' 'song_name' 'stimulus_category' 'resonEnergy' ...
-		    'meanEnergy' 'stdEnergy' 'resonFreqs' 'peakFreqs'};
+meanResEnergy.vars = {'stimulus_id' 'artist' 'song_name' 'stimulus_category' ...
+		    'MPP' 'stdPP' 'resonFreqs' 'npeaks' 'complex_simple' ...
+		    'mmCoh' 'mvCoh' 'vmCoh' 'vvCoh' ...
+		    'mmPred' 'mvPred' 'vmPred' 'vvPred' ...
+		    'mmTD' 'mvTD' 'vmTD' 'vvTD'};
+
 mrCols = set_var_col_const(meanResEnergy.vars);
-
-%fill in missing ipem params with defaults
-%ipemDefaultParams = ipem_proc_series('getDefaultParams');
-%missingAniFields = setdiff(fieldnames(ipemDefaultParams.ani),fieldnames(params.ani));
-%missingRpFields  = setdiff(fieldnames(ipemDefaultParams.rp),fieldnames(params.rp));
-
-%for iField = 1:length(missingAniFields)
-%  params.ani.(missingAniFields{iField}) = ipemDefaultParams.ani.(missingAniFields{iField});
-%end
-%for iField = 1:length(missingRpFields)
-%  params.rp.(missingRpFields{iField}) = ipemDefaultParams.rp.(missingRpFields{iField});
-%end
 
 clear searchCrit;
 searchCrit.type = 'stimulus_metadata';
@@ -54,50 +52,46 @@ for iStim = 1:nStims
   
   rpPath = fullfile(path,fstub,'rp');
   
-  %fprintf('Looking for rp match....');
-  %clear matchParams;
-  %matchParams.varName = 'rp';
-  %matchParams.paramFind.ani = params.ani;
-  %matchParams.paramFind.rp  = params.rp;
-  %matchParams.ignore = {'ani.aniPath'};  
-  %previousCalcFname = check_anal_exist(rpPath,matchParams);
-  
-  %if(~previousCalcFname)
-  %  error(sprintf('Could not find rhythm profile for stim ID %d, path %s',...
-  %		  thisStimID,rpPath));
-  %  else
-  %    fprintf('found match\n');
-  %  end
-  
-  %  rpLoad = load(fullfile(rpPath,previousCalcFname));
-  %  rp = rpLoad.rp;
-  %  rpCols = set_var_col_const(rp.vars);
- 
   ipemProc = ipem_proc_series(thisStimID,params.ipem);
   ipemProcCols = set_var_col_const(ipemProc.vars);
   rp = ipemProc.data{ipemProcCols.rp}{1};
-  rpCols = set_var_col_const(rp.vars);
+  rp = ensemble_datastruct2tree(rp);
 
   artist = stimMetaData.data{stimMetaDataCols.artist}{iStim};
   song_name = stimMetaData.data{stimMetaDataCols.name}{iStim};
-  
-  resonFreqs = rp.data{rpCols.resonatorFreqs};
-  resonEnergy = rp.data{rpCols.resonatorEnergy};
-  meanEnergy = mean(resonEnergy,2);
-  stdEnergy = std(resonEnergy,[],2);
-  peakIdxs = find_peaks(meanEnergy,params.peakFinder);
-  peakFreqs = resonFreqs(peakIdxs);
   
   meanResEnergy.data{mrCols.stimulus_id}(iStim,1) = thisStimID;
   meanResEnergy.data{mrCols.artist}{iStim,1} = artist;
   meanResEnergy.data{mrCols.song_name}{iStim,1} = song_name;
   meanResEnergy.data{mrCols.stimulus_category}{iStim,1} = thisStimCat;
-  meanResEnergy.data{mrCols.resonEnergy}{iStim,1} = resonEnergy;
-  meanResEnergy.data{mrCols.meanEnergy}{iStim,1} = meanEnergy';
-  meanResEnergy.data{mrCols.stdEnergy}{iStim,1} = stdEnergy';
-  meanResEnergy.data{mrCols.resonFreqs}{iStim,1} = resonFreqs;
-  meanResEnergy.data{mrCols.peakFreqs}{iStim,1} = peakFreqs;
+  meanResEnergy.data{mrCols.MPP}{iStim,1} = rp.meanResonatorEnergy;
+  meanResEnergy.data{mrCols.stdPP}{iStim,1} = rp.stdResonatorEnergy;
+  meanResEnergy.data{mrCols.resonFreqs}{iStim,1} = rp.resonatorFreqs;
 
+  if( isfield(rp,'interpMPPStruct'))
+    mppPeaks = rp.interpMPPStruct.peakInfo.peakFreq;
+  else
+    mppPeaks = rp.peakInfo.peakFreq;
+  end
+  
+  meanResEnergy.data{mrCols.npeaks} = length(mppPeaks);
+  meanResEnergy.data{mrCols.complex_simple} = rp_binRatioComplexity(rp);
+  
+  [meanResEnergy.data{mrCols.mmCoh},...
+   meanResEnergy.data{mrCols.mvCoh},...
+   meanResEnergy.data{mrCols.vmCoh},...
+   meanResEnergy.data{mrCols.vvCoh}] = rp_summaryTempExpect(rp.coherence.cohPerPeakPerBand);
+
+  [meanResEnergy.data{mrCols.mmPred},...
+   meanResEnergy.data{mrCols.mvPred},...
+   meanResEnergy.data{mrCols.vmPred},...
+   meanResEnergy.data{mrCols.vvPred}] = rp_summaryTempExpect(rp.vmExpect.vmPredictionPerOnset);
+  
+  [meanResEnergy.data{mrCols.mmTD},...
+   meanResEnergy.data{mrCols.mvTD},...
+   meanResEnergy.data{mrCols.vmTD},...
+   meanResEnergy.data{mrCols.vvTD}] = rp_summaryTempExpect(rp.vmExpect.vmTimingDev);
+  
 end
 
 outData = meanResEnergy;
