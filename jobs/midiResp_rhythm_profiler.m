@@ -1,32 +1,67 @@
 function outData = midiResp_rhythm_profiler(inData,params)
 %
-% Takes a session_x_trial structure, returned from
-% ensemble_session_x_trial_info. Loops through each session and
-% trial, then converts the midi responses from each trial to an aud
-% struct. The conversion to aud struct is just an intermediate
-% stage so that the response can be processed by ipem_proc_series,
-% which works on audio waveforms. ipem_proc_series processes the
-% ani and rp (rhythm profile). The rp for each response is added to
-% the session_x_trial struct, which is returned.
+% Calculates summary measurements of tapping from the rhythm model and ITI stats
+%  
+% INPUT(S):
+%   session_x_trial structure, returned from ensemble_session_x_trial_info.
+%   stimulus_metadata, returned from ensemble_load_expinfo
 %
+% PARAM(S):
+%  params.process:       'calcMeans','calcRP','loadRP'
+%  params.savePath:      path to save individual RPs and summary measurement mat file 
+%  params.ipem_proc:     ipem_proc_series parameters for rp calculation on tapping data
+%  params.storeIpemProc: cell array of strings designating which result of ipem_proc_series to
+%                        save for each trial (e.g. {'rp'})
+%  params.filt:          ensemble_filter parameters for filtering out
+%                        sessions/subs to process
+%  params.tapping_stats: params for tappingStats_v2 (calculates ITI
+%                        distribution info)
+%  params.fname:         Filename to save summary measurement struct (saved to params.savePath)         
+%  
+%  
+% DESCRIPTION:  
+%  Loops through each session and trial, converts the midi 
+%  responses from each trial to an aud struct. Each aud struct 
+%  is then processed with ipem_proc_series. The RPs for each
+%  trial are saved to disk in separate files at params.savePath.
+%  Originally, this function simply looped through each trial,
+%  calculated, and saved the RPs for each trial. Its utility has
+%  extended to the calculation of summary measurements (e.g. mean coherence,
+%  # MPP peaks, ITI std). If you only wish to recalculate the summary measurements
+%  without recalculating the rhythm profiles, simply set 
+%  params.process={'loadRP','calcMeans'}
 %
-
-%not supporting searching/loading of rp with specified params sets yet
-%matching is done by checking trial order in the session.
+%  not supporting searching/loading of rp with specified params sets yet
+%  matching is done by checking trial order in the session.
+%
+%  NOTE: an earlier version of this function (r886 in svn) was performing
+%        find_peaks, in lieu of using the peakFreqs in stored in the RP struct
+%        This was old code that was forgotten in this function. This older code
+%        was using params.peakFinder, which had a single parameter
+%        params.peakFinder.thresh = 0.25. Therefore, some earlier results
+%        (around June 2009) may have different nPeak results than currently
+%        reported. - S.T. 3/1/2010
+%  
+%  
+%  2007, Stefan Tomic - Original Version
+%  2/24/2010, S.T. -  provided comments and general description
+%                     Renamed meanEnergies variable to more appropriate name of
+%                     tappingSummary (also was called trialMPP at one point- sorry!) 
+%                     Likewise renamed meCols->tsCols, and meIdx->tsIdx
 
 storeIpemProc = params.storeIpemProc;
   
 if(ismember('calcMeans',params.process))
   %data struct for mean resonEnergies 
-  meanEnergies = ensemble_init_data_struct;
-  meanEnergies.type = 'mean_energies';
-  meanEnergies.name = 'mean_energies_by_trial_and_subject';
-  meanEnergies.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'norm_by_peakITI_tapping_stats' 'norm_by_mean_tapping_stats' 'tapping_stats' 'stimulus_category' ...
+  tappingSummary = ensemble_init_data_struct;
+  tappingSummary.type = 'mean_energies';
+  tappingSummary.name = 'mean_energies_by_trial_and_subject';
+  tappingSummary.vars = {'subject_id' 'stimulus_id' 'trial_order' 'tapping_cond' 'norm_by_peakITI_tapping_stats' 'norm_by_mean_tapping_stats' 'tapping_stats' 'stimulus_category' ...
 		    'artist' 'song_name' 'meanEnergy' 'stdEnergy' ...
-		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths','meanVMPrediction','meanVMViolation','meanVMTimingDev','varVMPrediction','varVMViolation','varVMTimingDev','meanCoherence','varCoherence'};
+		    'resonFreqs' 'peakFreqs' 'normPeakFreqs' 'peakWidths','numPeaks','peakConcentration','meanVMPrediction','meanVMLogFulfillment','meanVMTimingDev','varVMPrediction','varVMLogFulfillment','varVMTimingDev','meanCoherence','varCoherence'};
 
-  meCols = set_var_col_const(meanEnergies.vars);
-  meIdx = 1;
+  tsCols = set_var_col_const(tappingSummary.vars);
+  tsIdx = 1;
 end
 
 if(~isfield(params,'process'))
@@ -177,49 +212,54 @@ for iSess = 1:length(sessIDs)
 	peakFreqs = peakInfo.data{peakInfoCols.peakFreq};
 	normPeakFreqs = peakInfo.data{peakInfoCols.normPeakFreq};
 	peakWidths = peakInfo.data{peakInfoCols.width};
+	normPeakHeights = peakInfo.data{peakInfoCols.normHeight};
+
+	%calculating numPeaks
+	numPeaks = length(peakFreqs);
 	
-	peakWidths = get_rp_peakWidths('rpEnergy',meanResonEnergy,...
-						  'peakFreqs',peakFreqs,...
-						  'resonFreqs',resonFreqs);
+	%calculating peakConcentration (sum of normalized heights / npeaks)
+	peakConcentration = sum(normPeakHeights) ./ numPeaks;
+	
 	if(isfield(rpCols,'coherence'))
 	  coherence = thisRP.data{rpCols.coherence};
 	  coherenceCols = set_var_col_const(coherence.vars);
-	  meanEnergies.data{meCols.meanCoherence}(meIdx,1) = nanmean(coherence.data{coherenceCols.cohPerPeakPerBand}{1});
-	  meanEnergies.data{meCols.varCoherence}(meIdx,1) = nanstd(coherence.data{coherenceCols.cohPerPeakPerBand}{1}).^2;
+	  tappingSummary.data{tsCols.meanCoherence}(tsIdx,1) = nanmean(coherence.data{coherenceCols.cohPerPeakPerBand}{1});
+	  tappingSummary.data{tsCols.varCoherence}(tsIdx,1) = nanstd(coherence.data{coherenceCols.cohPerPeakPerBand}{1}).^2;
 	end
 	  
 	if(isfield(rpCols,'vmExpect'))
 	  vmData = thisRP.data{rpCols.vmExpect};
 	  vmDataCols = set_var_col_const(vmData.vars);
 	  vmPredictionPerOnset = vmData.data{vmDataCols.vmPredictionPerOnset};
-	  vmViolationPerOnset = vmData.data{vmDataCols.vmViolationPerOnset};
+	  vmLogFulfillPerOnset = vmData.data{vmDataCols.vmLogFulfillPerOnset};
 	  vmTimingDev = vmData.data{vmDataCols.vmTimingDev};
-	  meanEnergies.data{meCols.meanVMPrediction}(meIdx,1) = nanmean(vmPredictionPerOnset{1});
-	  meanEnergies.data{meCols.meanVMViolation}(meIdx,1) = nanmean(vmViolationPerOnset{1});
-	  meanEnergies.data{meCols.meanVMTimingDev}(meIdx,1) = nanmean(vmTimingDev{1});
-	  meanEnergies.data{meCols.varVMPrediction}(meIdx,1) = nanstd(vmPredictionPerOnset{1}).^2;
-	  meanEnergies.data{meCols.varVMViolation}(meIdx,1) = nanstd(vmViolationPerOnset{1}).^2;
-	  meanEnergies.data{meCols.varVMTimingDev}(meIdx,1) = nanstd(vmTimingDev{1}).^2;
+	  tappingSummary.data{tsCols.meanVMPrediction}(tsIdx,1) = nanmean(vmPredictionPerOnset{1});
+	  tappingSummary.data{tsCols.meanVMLogFulfillment}(tsIdx,1) = nanmean(vmLogFulfillPerOnset{1});
+	  tappingSummary.data{tsCols.meanVMTimingDev}(tsIdx,1) = nanmean(vmTimingDev{1});
+	  tappingSummary.data{tsCols.varVMPrediction}(tsIdx,1) = nanstd(vmPredictionPerOnset{1}).^2;
+	  tappingSummary.data{tsCols.varVMLogFulfillment}(tsIdx,1) = nanstd(vmLogFulfillPerOnset{1}).^2;
+	  tappingSummary.data{tsCols.varVMTimingDev}(tsIdx,1) = nanstd(vmTimingDev{1}).^2;
 	end
 		
-	meanEnergies.data{meCols.subject_id}{meIdx,1} = thisSubjectID;
-	meanEnergies.data{meCols.stimulus_id}(meIdx,1) = thisStimulusID;
-	meanEnergies.data{meCols.trial_order}(meIdx,1) = iTrial;
-	meanEnergies.data{meCols.tapping_cond}{meIdx,1}  = thisTapCond;
-	meanEnergies.data{meCols.tapping_stats}{meIdx,1} = thisTapStats;
-	meanEnergies.data{meCols.norm_by_peakITI_tapping_stats}{meIdx,1} = thisNormByPeakTapStats;
-	meanEnergies.data{meCols.norm_by_mean_tapping_stats}{meIdx,1} = thisNormByMeanTapStats;
-	meanEnergies.data{meCols.stimulus_category}{meIdx,1} = thisStimCat;
-	meanEnergies.data{meCols.artist}{meIdx,1} = thisArtist;
-	meanEnergies.data{meCols.song_name}{meIdx,1} = thisSongName;
-	meanEnergies.data{meCols.meanEnergy}{meIdx,1} = meanResonEnergy;
-	meanEnergies.data{meCols.stdEnergy}{meIdx,1} = stdResonEnergy;
-	meanEnergies.data{meCols.resonFreqs}{meIdx,1} = resonFreqs;
-	meanEnergies.data{meCols.normPeakFreqs}{meIdx,1} = normPeakFreqs;
-	meanEnergies.data{meCols.peakFreqs}{meIdx,1} = peakFreqs;
-	meanEnergies.data{meCols.peakWidths}{meIdx,1} = peakWidths;
-
-	meIdx = meIdx + 1;
+	tappingSummary.data{tsCols.subject_id}{tsIdx,1} = thisSubjectID;
+	tappingSummary.data{tsCols.stimulus_id}(tsIdx,1) = thisStimulusID;
+	tappingSummary.data{tsCols.trial_order}(tsIdx,1) = iTrial;
+	tappingSummary.data{tsCols.tapping_cond}{tsIdx,1}  = thisTapCond;
+	tappingSummary.data{tsCols.tapping_stats}{tsIdx,1} = thisTapStats;
+	tappingSummary.data{tsCols.norm_by_peakITI_tapping_stats}{tsIdx,1} = thisNormByPeakTapStats;
+	tappingSummary.data{tsCols.norm_by_mean_tapping_stats}{tsIdx,1} = thisNormByMeanTapStats;
+	tappingSummary.data{tsCols.stimulus_category}{tsIdx,1} = thisStimCat;
+	tappingSummary.data{tsCols.artist}{tsIdx,1} = thisArtist;
+	tappingSummary.data{tsCols.song_name}{tsIdx,1} = thisSongName;
+	tappingSummary.data{tsCols.meanEnergy}{tsIdx,1} = meanResonEnergy;
+	tappingSummary.data{tsCols.stdEnergy}{tsIdx,1} = stdResonEnergy;
+	tappingSummary.data{tsCols.resonFreqs}{tsIdx,1} = resonFreqs;
+	tappingSummary.data{tsCols.normPeakFreqs}{tsIdx,1} = normPeakFreqs;
+	tappingSummary.data{tsCols.peakFreqs}{tsIdx,1} = peakFreqs;
+	tappingSummary.data{tsCols.peakWidths}{tsIdx,1} = peakWidths;
+	tappingSummary.data{tsCols.numPeaks}{tsIdx,1} = numPeaks;
+	tappingSummary.data{tsCols.peakConcentration}{tsIdx,1} = peakConcentration;
+	tsIdx = tsIdx + 1;
 	
       end
       
@@ -232,11 +272,11 @@ end
 if(ismember('calcMeans',params.process) && isfield(params,'savePath') ...
    && params.saveCalc)
   meanEnergyPath = fullfile(params.savePath,params.fname);
-  save(meanEnergyPath,'meanEnergies','params');
+  save(meanEnergyPath,'tappingSummary','params');
 end
 
 if(ismember('calcMeans',params.process))
-  outData = meanEnergies;
+  outData = tappingSummary;
 else
   outData = [];
 end

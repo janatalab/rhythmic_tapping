@@ -95,10 +95,10 @@ an{na}.requires = {struct('name','get_trial_info','vars','tappingStats_groupBy_s
 na=na+1; %5
 an{na}.name = 'midiResp_rhythm_profiler';
 an{na}.fun = @midiResp_rhythm_profiler;
-an{na}.params.process = {'calcRP','calcMeans','recalcTappingStats'};
+an{na}.params.process = {'calcRP','calcMeans','recalcTappingStats'}; %'calcRP','loadRP','calcMeans','recalcTappingStats'
 %an{na}.params.filt.include.all.subject_id = {'01shr85151'};%'08led84281'}; %04eee88251'}; %for inspecting specific subjects
 an{na}.params.savePath = globals.paths.resp_rp_path;
-an{na}.params.fname = 'meanEnergies_peakWidths_byTrialSub_28Jan2010.mat';
+an{na}.params.fname = 'tapping_response_summary_measurements_01Mar2010.mat';
 an{na}.params.saveCalc = 1;
 an{na}.params.nmat2aud.Fs = 100;
 an{na}.params.nmat2aud.padStop = 0;
@@ -196,22 +196,30 @@ an{na}.params.plot.plotOverall = 1;
 an{na}.params.plot.plotByStim = 0;
 an{na}.requires = {struct('name','plot_resp_meanRhythmProfile_byStimID_v2')};
 
+%tags on correlation value to tappingSummary struct
 na=na+1; %9
 an{na}.name = 'indiv_corr_resp_vs_stim';
 an{na}.fun = @indiv_corr_resp_vs_stim;
 an{na}.params.ipem = globals.stimIPEMParams;
-an{na}.params.ipem.rp.perform.calcTemporalExpect = 0;
-an{na}.params.ipem.rp.perform.calcVonMises = 0;
-an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
+% normally we want to skip the following rp parameters
+% however, we need to make sure that these are not explicitly matched by
+% ipem_proc_series, i.e. we want to pick up already calculated data, but don't
+% care whether or not the following calculations were performed.
+%an{na}.params.ipem.rp.perform.calcOnsetInfo = 0;
+%an{na}.params.ipem.rp.perform.calcComplexOutput = 0;
+%an{na}.params.ipem.rp.perform.interpMPP = 0;
+%an{na}.params.ipem.rp.perform.calcVonMises = 0;
+%an{na}.params.ipem.rp.perform.calcPhaseCoherence = 0;
 an{na}.params.skipStimIDs = globals.ensemble.silence_stim_id;
 an{na}.params.saveData = 1;
 an{na}.params.path = globals.paths.resp_rp_path;
 an{na}.params.loadFname = an{5}.params.fname;
-an{na}.params.fname = 'indiv_corr_resp_vs_stim.mat';
+an{na}.params.fname = an{5}.params.fname; %overwriting original summary
+                                          %measurement file with new one
 an{na}.requires = {};
 
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [9];
 an = ensemble_jobman(an,params);
 return

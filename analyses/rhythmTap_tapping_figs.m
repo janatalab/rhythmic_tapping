@@ -7,36 +7,37 @@
 % 7/5/09 ST - added coherence, von mises timing
 
 
-LOAD_DATA = 1;
+LOAD_DATA = 0;
 RUN_SUPPLEMENTARY_ANALYSES = 0;
 EXPORT_STIMDATA = 0;
 EXPORT_TRIALDATA = 0;
+COPY_STIMDATA_TO_TRIALDATA = 0;
 RUN_SUMMARY_ANALYSES = 0;
 SAVE_ANALYSES = 0;
-GENERATE_FIGS = 0;
+GEN_FIG_INDIV_TRIAL = 0;
+GEN_FIG_AVG_RATING = 1;
 
 globals = rhythmTap_globals;
-globals.stimIPEMParams.rp.perform.calcTemporalExpect = 1;
-globals.stimIPEMParams.rp.perform.calcVonMises = 1;
-globals.stimIPEMParams.rp.perform.calcPhaseCoherence = 1;
 
 % List of analysis files we need to load
 
 % Load stimulus related information and metrics
 stim_rpProfile_fstub = ...
-    'rhythmTap_stimulus_rprofile_analysis_27July2007_11:30.mat';
+    'rhythmTap_stimulus_rprofile_analysis_04-Mar-2010_19:17:52.mat';
+%    'rhythmTap_stimulus_rprofile_analysis_27July2007_11:30.mat';
 
 % File with post stim responses
 subject_grooveEnum_fstub = ...
     'rhythmTap_grooveEnumByTapStats_17July2007_14:15.mat';
   
 % File with subject tapping metrics
-subject_rpProfile_fstub = 'RP_corr_by_trial.mat';
-%subject_rpProfile_fstub = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
+ subject_rpProfile_fstub =  'tapping_response_summary_measurements_01Mar2010.mat';
+% subject_rpProfile_fstub = 'RP_corr_by_trial.mat';
+% subject_rpProfile_fstub = 'meanEnergies_peakWidths_byTrialSub_normIOI.mat';
 
 % Where to write trialdata and stimdata
-trialdata_fname = fullfile(globals.paths.datapath, 'rhythmTap_trialdata.txt');
-stimdata_fname = fullfile(globals.paths.datapath, 'rhythmTap_stimdata.txt');
+trialdata_fname = fullfile(globals.paths.datapath, 'rhythmTap_trialdata_05Mar2010.txt');
+stimdata_fname = fullfile(globals.paths.datapath, 'rhythmTap_stimdata_05Mar2010.txt');
 
 analysis_types.subject = {'nanmean', ... % 
       'nanstd', ... % 
@@ -69,16 +70,26 @@ if LOAD_DATA
   % Response data with response profiles
   matfname = fullfile(globals.paths.resp_rp_path, subject_rpProfile_fstub);
   fprintf('Loading data from: %s\n',matfname);
-  load(matfname,'trialMPP');
-  rp_ds = trialMPP;
-  clear trialMPP
+
+  tappingRPs = load(matfname);
+  % dealing with variable name changes of tapping rp data
+  % this was previously stored in trialMPP but is now named tappingSummary
+  if(isfield(tappingRPs,'tappingSummary'))
+    rp_ds = tappingRPs.tappingSummary;
+  elseif(isfield(tappingRPs,'trialMPP'))
+    rp_ds = tappingRPs.trialMPP;
+  end
+  clear tappingRPs;
+  
   rpcols = set_var_col_const(rp_ds.vars);
    
   % Copy the variables from rp_ds to appropriate locations in 
   % resp_st so that we only have to deal with a single datastruct from here on out.
+
+  %'meanVMViolation','varVMViolation' were replaced by 'meanVMLogFulfillment','varVMLogFulfillment'
   copy_vars = {'meanEnergy','stdEnergy','resonFreqs','peakFreqs', ...
     'meanCoherence','varCoherence','meanVMTimingDev','varVMTimingDev',...
-    'meanVMViolation','varVMViolation','meanVMPrediction','varVMPrediction',...
+    'meanVMLogFulfillment','varVMLogFulfillment','meanVMPrediction','varVMPrediction',...
     'corr'};
  
   subids = unique(rp_ds.data{rpcols.subject_id});
@@ -132,6 +143,16 @@ if LOAD_DATA
   load(datafname,'an')
   stim_st = an{5}.results;
   stimcols = set_var_col_const(stim_st.vars);
+   
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % No need to perform the following code anymore
+  % The summary measurements (meanMeanCoh, npeaks,etc) are returned by the
+  % analysis in rhythmTap_stimulus_rprofile_analysis now in get_stim_summaryMeasurements
+  % If any further summary measurements are needed (e.g. Entropy), they can be
+  % added to that function.
+  % S.T. 2/23/2010
+  
+  %{
   
   % Now we need to go and get the stimulus info like coherence and other
   % good stuff
@@ -141,6 +162,7 @@ if LOAD_DATA
   stimcols = set_var_col_const(stim_st.vars);
   
   stimIDs = unique(stim_st.data{stimcols.stimulus_id});
+ 
   for iStim = 1:length(stimIDs)
     thisStimulusID = stimIDs(iStim);
     thisStimIdx = find(stim_st.data{stimcols.stimulus_id} == thisStimulusID);
@@ -168,6 +190,9 @@ if LOAD_DATA
       stim_st.data{stimcols.coherence}(thisStimIdx) = NaN;
     end
   end % for iStim=
+  %}
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
   
   
 end % if LOAD_DATA
@@ -198,13 +223,18 @@ if RUN_SUPPLEMENTARY_ANALYSES
       fisher_r2z(resp_st.data{respcols.corr});
   end
   
+  %%%%
+  % Additional measurements on stim data can be performed in
+  % get_stim_summaryMeasurements. See rhythmTap_stimulus_rprofile_analysis
+  %
+  %{
   % Calculate any other desired measures on the stimulus data
   curr_var = 'rp_entropy';
   if ~ismember(curr_var, fieldnames(stimcols))
     stim_st.vars{end+1} = curr_var;
     stimcols = set_var_col_const(stim_st.vars);
     stim_st.data{stimcols.(curr_var)} = ...
-      rp_entropy(stim_st.data{stimcols.meanEnergy});
+      rp_entropy(stim_st.data{stimcols.MPP});
   end
 
   curr_var = 'numPeaks';
@@ -214,6 +244,9 @@ if RUN_SUPPLEMENTARY_ANALYSES
     stim_st.data{stimcols.(curr_var)} = ...
       cellfun('length',stim_st.data{stimcols.peakFreqs});
   end
+  
+  %}
+  
   
 end % if RUN_SUPPLEMENTARY_ANALYSES
 
@@ -326,7 +359,11 @@ if EXPORT_TRIALDATA
   stimids = unique(export_st.data{exportcols.data}{datacols.stimulus_id});
   numvals = size(export_st.data{exportcols.data}{1},1);
   
-  copy_vars = {'numPeaks', '%d'; 'coherence','%1.4f'}; % variables to copy
+  %copy_vars = {'numPeaks', '%d'; 'coherence','%1.4f'}; % variables to copy
+  copy_vars = {'npeaks', '%d'; 'complex_simple','%1.4f' ; 'mmCoh','%.4f'; 'mvCoh','%.4f';...
+	       'vmCoh','%.4f'; 'vvCoh','%.4f';'mmPred','%.4f';'mvPred','%.4f';'vmPred','%.4f';...
+	       'vvPred','%.4f';'mmTD','%.4f';'mvTD','%.4f';'vmTD','%.4f';'vvTD','%.4f';...
+	       'mmLogFul','%.4f';'mvLogFul','%.4f';'vmLogFul','%.4f';'vvLogFul','%.4f';};
   
   for ic = 1:size(copy_vars,1)
     export_st.data{exportcols.column_labels}{end+1} = [copy_vars{ic,1} ...
@@ -367,6 +404,52 @@ if EXPORT_TRIALDATA
   print_params.add_datestamp = false;
   ensemble_display_table(export_st,print_params);
 end
+
+%copies measurements in stim_data to resp_data, so that we have one struct from
+%which we can plot figures
+if(COPY_STIMDATA_TO_TRIALDATA)
+  
+  copy_vars = {'npeaks', 'complex_simple','mmCoh','mvCoh',...
+	      'vmCoh','vvCoh','mmPred','mvPred','vmPred',...
+	      'vvPred','mmTD','mvTD','vmTD','vvTD',...
+	      'mmLogFul','mvLogFul','vmLogFul','vvLogFul'};
+ 
+  dest_vars = strcat(copy_vars,'_stim');
+  
+  stimids = unique(resp_st.data{respcols.stimulus_id});
+  nstims = length(stimids);
+  
+  for ic = 1:length(copy_vars)
+ 
+     %copy the variable name to resp_st if it isn't already there
+    if(~ismember(dest_vars{ic},resp_st.vars))
+      resp_st.vars{end+1} = dest_vars{ic};
+      respcols = set_var_col_const(resp_st.vars);
+    end
+    
+    for istim = 1:nstims
+      curr_stimid = stimids(istim);
+      stimmask = resp_st.data{respcols.stimulus_id} == curr_stimid;
+      srcstim_idx = find(stim_st.data{stimcols.stimulus_id} == curr_stimid);
+
+      if isempty(srcstim_idx)
+        fprintf(['Could not find information for stimid: %d\n. Setting corresponding' ...
+		 ' values to NaN\n'], curr_stimid);
+	resp_st.data{respcols.(dest_vars{ic})}(find(stimmask),1) = NaN;
+      else
+        % copy the data
+        resp_st.data{respcols.(dest_vars{ic})}(find(stimmask),1) = ...
+	    stim_st.data{stimcols.(copy_vars{ic})}(srcstim_idx);
+      end
+      
+    end
+    
+  end
+  
+  
+end
+
+
 
 % Get the number of stimulus categories
 stimcats = unique(resp_st.data{respcols.stimulus_category});
@@ -485,7 +568,7 @@ if RUN_SUMMARY_ANALYSES
   end
 end % if RUN_SUMMARY_ANALYSES
  
-if GENERATE_FIGS
+if GEN_FIG_INDIV_TRIAL
   nstimcats = length(stimcats);
   ntapconds = length(tapconds);
   
@@ -502,11 +585,21 @@ if GENERATE_FIGS
   %figure(1),clf
 %  poststim_question_fig;
   
-  measures2plot = {'tapping_var_about_peak','rp_entropy'};
-  measures2plot = {'numPeaks'};
+  %measures2plot = {'tapping_var_about_peak','rp_entropy'};
+  %measures2plot = {'numPeaks'};
+  measures2plot = {'mmCoh_stim','mmPred_stim','mmTD_stim'};
+  measures2plot = {'mmCoh_stim','mvCoh_stim',...
+		   'vmCoh_stim','vvCoh_stim','mmPred_stim','mvPred_stim','vmPred_stim',...
+		   'vvPred_stim','mmTD_stim','mvTD_stim','vmTD_stim','vvTD_stim',...
+		   'mmLogFul_stim','mvLogFul_stim','vmLogFul_stim','vvLogFul_stim'};
+  
+  %{
   measures2plot = {'meanCoherence','varCoherence',...
 		   'meanVMTimingDev','varVMTimingDev','meanVMViolation',...
 		   'varVMViolation','meanVMPrediction','varVMPrediction'};
+ 
+  %}
+  
   for ivar = 1:length(measures2plot)
 
     %subavg_tapping_corr_tap_question_fig;
@@ -520,3 +613,19 @@ if GENERATE_FIGS
     
   end % for ivar =
 end % if GENERATE_FIGS
+
+
+if GEN_FIG_AVG_RATING
+  
+  
+  corrSMQParams.measures2plot = {'mmCoh_stim','mvCoh_stim',...
+		   'vmCoh_stim','vvCoh_stim','mmPred_stim','mvPred_stim','vmPred_stim',...
+		   'vvPred_stim','mmTD_stim','mvTD_stim','vmTD_stim','vvTD_stim',...
+		   'mmLogFul_stim','mvLogFul_stim','vmLogFul_stim','vvLogFul_stim'};
+  
+  corrSMQParams.globalsFile = 'rhythmTap_globals';
+    
+  corr_stimMeasure_x_quest(resp_st,quest_subset,corrSMQParams);
+  
+  
+end

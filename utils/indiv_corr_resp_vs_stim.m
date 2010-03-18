@@ -1,26 +1,28 @@
 function outData = indiv_corr_resp_vs_stim(inData,params)
 %
+% correlates the tapping MPP of each individual trial with the corresponding stimulus MPP
+% returns a correlation value and p value for each trial.
 %
-%
-% 
-%
+% Also loads the tappingSummary data struct (saved from
+% midiResp_rhythm_profiler), tags the correlation value for each trial onto
+% this struct, and saves the resulting struct back to the same path.
 
 loadPath = fullfile(params.path,params.loadFname);
 loadRespRP = load(loadPath);
 
-trialMPP = loadRespRP.meanEnergies;
+tappingSummary = loadRespRP.tappingSummary;
 
 skipStimIDs = params.skipStimIDs;
 
 %obtain coefficients for butterworth high pass filter
 [b,a] = butter(3,.15,'high');
 
-trialMPP.vars = {trialMPP.vars{:} 'corr' 'pval'};
-meCols = set_var_col_const(trialMPP.vars);
+tappingSummary.vars = {tappingSummary.vars{:} 'corr' 'pval'};
+meCols = set_var_col_const(tappingSummary.vars);
 
-nTrials = length(trialMPP.data{meCols.meanEnergy});
+nTrials = length(tappingSummary.data{meCols.meanEnergy});
 
-stimIDList = unique(trialMPP.data{meCols.stimulus_id});
+stimIDList = unique(tappingSummary.data{meCols.stimulus_id});
 stimIDList = setdiff(stimIDList,skipStimIDs);
 nStims = length(stimIDList);
 
@@ -49,10 +51,10 @@ end
 
 for iTrial = 1:nTrials
 
-  thisStimCat = trialMPP.data{meCols.stimulus_category}{iTrial};
-  tappingCond = trialMPP.data{meCols.tapping_cond}{iTrial};
-  thisStimID = trialMPP.data{meCols.stimulus_id}(iTrial);
-  thisTapMPP = trialMPP.data{meCols.meanEnergy}{iTrial};
+  thisStimCat = tappingSummary.data{meCols.stimulus_category}{iTrial};
+  tappingCond = tappingSummary.data{meCols.tapping_cond}{iTrial};
+  thisStimID = tappingSummary.data{meCols.stimulus_id}(iTrial);
+  thisTapMPP = tappingSummary.data{meCols.meanEnergy}{iTrial};
   if(~ismember(thisStimID,skipStimIDs) && ~strcmp(tappingCond,'no_tap') && any(thisTapMPP))
  
     stimIdx = find(thisStimID == stimIDList);
@@ -67,17 +69,17 @@ for iTrial = 1:nTrials
     p = NaN;
   end
   
-  trialMPP.data{meCols.corr}(iTrial,1) = c;
-  trialMPP.data{meCols.pval}(iTrial,1) = p;
+  tappingSummary.data{meCols.corr}(iTrial,1) = c;
+  tappingSummary.data{meCols.pval}(iTrial,1) = p;
  
 end
 
 if(params.saveData)  
   fullfpath = fullfile(params.path,params.fname);
-  save(fullfpath,'trialMPP');
+  save(fullfpath,'tappingSummary','params');
 end
 
 
-outData = trialMPP;
+outData = tappingSummary;
 
 

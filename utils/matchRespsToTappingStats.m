@@ -1,5 +1,16 @@
 function result = matchRespsToTappingStats(inData,params)
-
+%
+% Merges tapping data with Ensemble responses and outputs to a form that can be easily interpreted for statistics
+%
+% 
+% This function takes the result from ensemble_session_trial_info and response
+% data from ensemble_load_expinfo. Summary tapping stats are calculated. The
+% summary tapping stats and response data are merged to an Ensemble
+% data struct that represents all the data for a given trial on a single row.
+%
+%
+% Stefan Tomic, 2007
+ 
 trial_qids = params.trial_qids;
 trial_conds = params.trial_conds;
 

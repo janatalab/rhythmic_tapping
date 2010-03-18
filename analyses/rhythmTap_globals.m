@@ -383,6 +383,18 @@ globals.stimIPEMParams.rp =  rp_paramGroups_v2('param_group',...
 				   'reson_filterQSpacing_periodBasedDecay',...
 				   'input_type','ani','gain_type','beta_distribution');
 
+
+% added 2/22/2010 S.T.
+% set parameters to calculate complex reson output,
+% interpolated, MPP, and temporal expectancy calculations
+globals.stimIPEMParams.rp.perform.calcOnsetInfo = 1;
+globals.stimIPEMParams.rp.perform.calcComplexOutput = 1;
+globals.stimIPEMParams.rp.perform.interpMPP = 1;
+globals.stimIPEMParams.rp.perform.calcVonMises = 1;
+globals.stimIPEMParams.rp.perform.calcPhaseCoherence = 1;
+%%%%%%
+
+
 globals.respIPEMParams.glob.process = {'rp'};
 globals.respIPEMParams.glob.save_calc = {'rp'};
 globals.respIPEMParams.rp = rp_paramGroups_v2('param_group',...
@@ -403,4 +415,4 @@ globals.export.trialdata.ignore_cols = {'trial_id','response_order', ...
   'compqid_495_1','compqid_495_2'};
 
 globals.export.stimdata.ignore_cols = {'artist','song_name', ...
-      'resonEnergy','meanEnergy','stdEnergy','resonFreqs','peakFreqs'};
+      'resonEnergy','MPP','stdPP','resonFreqs','peakFreqs'};

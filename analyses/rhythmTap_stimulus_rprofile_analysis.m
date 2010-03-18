@@ -8,6 +8,8 @@
 %
 % May, 2007 - Stefan Tomic
 
+SAVE_ANALYSES = 1;
+
 globals = rhythmTap_globals; 
 
 if(~exist('an','var'))
@@ -17,11 +19,11 @@ end
 %store form defs in a more easily accessed variable
 form_defs = globals.ensemble.form_defs;
 
-
 % Create an array of analysis structures
 %clear an;
 na = 0;
 
+%an{1}
 na=na+1;
 an{na}.name = 'ensemble_load_expinfo';
 an{na}.fun  = @ensemble_load_expinfo;
@@ -31,18 +33,17 @@ an{na}.params.filt = globals.ensemble.filt;
 an{na}.params.filt.include.all.stimulus_id = [1933]; %[5410];
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 
+%an{2}
 na=na+1;
 an{na}.params.verbose = 1;
 an{na}.name = 'rhythm profiler';
 an{na}.fun = @ipem_proc_series;
 an{na}.params = globals.stimIPEMParams;
-an{na}.params.glob.force_recalc = {'ani','rp'};
-an{na}.params.glob.save_calc = {}; %not saving any
-                                             %calculations for now
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata')};
 
 %STIM/RESP PARSING
+%an{3}
 na=na+1;
 an{na}.name = 'session_x_trial_info';
 an{na}.fun  = @ensemble_session_trial_info;
@@ -61,7 +62,7 @@ an{na}.params.parse_midi_resps.filename = 'midi_resp_<subject_id>_<session_id>.m
 an{na}.params.parse_midi_resps.path = globals.paths.resp_midi_path;		    
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars', ...
 			  'response_data'),struct('name','ensemble_load_expinfo','vars','session_info')};
-	
+%an{4}	
 na=na+1;
 an{na}.name = 'plot_stim_rhythm_profile';
 an{na}.fun = @plot_stim_rhythm_profile;
@@ -103,23 +104,22 @@ an{na}.params.plot.savePlot = 1;
 an{na}.params.plot.plotFname = 'orig_beta_response.ps';
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
 
+%an{5}
+% was originally calling get_stim_meanRhythmProfile
+% this was renamed to get_stim_summaryMeasurements, which retrieves a number of
+% useful summary measurements (e.g. npeaks, varvarCoh).
 na=na+1;
-an{na}.name = 'get_stim_meanRhythmProfiles';
-an{na}.fun = @get_stim_meanRhythmProfiles;
+an{na}.name = 'get_stim_summaryMeasurements';
+an{na}.fun = @get_stim_summaryMeasurements;
+an{na}.params.ipem = globals.stimIPEMParams;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.params.stimAttributes.filt.include.all.name = {'real_music_low_groove','real_music_mid_groove','real_music_high_groove'};
 an{na}.params.stimAttributes.filt.exclude.any.stimulus_id = globals.ensemble.silence_stim_id;
 an{na}.params.getTrialsParams.plotTappingConditions = {'iso_tap','free_form_tap'};
 an{na}.params.stims.filt.exclude.any.stimulus_id = globals.ensemble.silence_stim_id;
-an{na}.params.nmat2aud.Fs = 44100;
-an{na}.params.nmat2aud.padStop = 2;
-an{na}.params.nmat2aud.ioiThresh = globals.midi.ioiThresh;
-an{na}.params.ipem.glob = an{2}.params.glob;
-an{na}.params.ipem.ani  = an{2}.params.ani;
-an{na}.params.ipem.rp   = an{2}.params.rp;
-an{na}.params.peakFinder.thresh = 0.25;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
 
+%an{6}
 na=na+1;
 an{na}.name = 'plot_stimRPMovieFrames';
 an{na}.fun = @ensemble_processStims
@@ -146,10 +146,13 @@ an{na}.params.funcParams.plot.numResonTicks = 8;
 an{na}.params.funcParams.plot.savePlot = 1;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
 
-
-
-
 params.ensemble.conn_id = 7;
-params.run_analyses = [2];
+params.run_analyses = [5];
 an = ensemble_jobman(an,params);
+
+if(SAVE_ANALYSES)
+  an_fname = ['rhythmTap_stimulus_rprofile_analysis_' strrep(datestr(now),' ','_') '.mat'];
+  save(fullfile(globals.paths.datapath,an_fname),'an');
+end
+
 return
