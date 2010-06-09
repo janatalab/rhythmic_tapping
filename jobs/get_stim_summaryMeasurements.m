@@ -18,7 +18,8 @@ meanResEnergy.vars = {'stimulus_id','artist','song_name','stimulus_category', ..
 		    'mmCoh','mvCoh','vmCoh','vvCoh', ...
 		    'mmPred','mvPred','vmPred','vvPred', ...
 		    'mmTD','mvTD','vmTD','vvTD',...
-		    'mmLogFul','mvLogFul','vmLogFul','vvLogFul'  };
+		    'mmLogFul','mvLogFul','vmLogFul','vvLogFul','mmDenv', ...
+		    'sigRMS','maxAmp'};
 
 mrCols = set_var_col_const(meanResEnergy.vars);
 
@@ -45,6 +46,11 @@ for iStim = 1:nStims
       stimMetaData.data{stimMetaDataCols.stimulus_id}(iStim);
 
   fprintf('Processing Stim %d, ID %d\n',iStim,thisStimID);
+  
+  %calculate simple RMS of stim signal
+  %to make sure this isn't affecting stim ratings
+  stimSig = read_audio_stim(thisStimID,[],1);
+  rmsStimSig = sqrt(mean(stimSig.^2));
   
   stimAttIdx = find(stimAttMetaData.data{stimAttMetaDataCols.stimulus_id} == thisStimID);
   thisStimCat = stimAttMetaData.data{stimAttMetaDataCols.name}{stimAttIdx};
@@ -84,6 +90,21 @@ for iStim = 1:nStims
   
   meanResEnergy.data{mrCols.peakConcentration} = peakConcentration;
   
+  
+  %get mean denvAtOnsets
+  nBands = size(rp.sumDenv,1);
+  for iBand = 1:nBands
+    denvThisBand = rp.sumDenv(iBand,:);
+    onsetTimesThisBand = rp.onsetInfo.onsetTimesSampsByBand{iBand};
+    denvAtOnsets = denvThisBand(onsetTimesThisBand);
+    meanDenvByBand(iBand) = mean(denvAtOnsets);
+  
+  end
+ 
+  
+  meanResEnergy.data{mrCols.mmDenv}(iStim,1) = mean(meanDenvByBand);
+  meanResEnergy.data{mrCols.sigRMS}(iStim,1) = rmsStimSig;
+  meanResEnergy.data{mrCols.maxAmp}(iStim,1) = max(stimSig);
   
   summaryParams.throwOutFirstIdx = 0;
   [meanResEnergy.data{mrCols.mmCoh}(iStim,1),...

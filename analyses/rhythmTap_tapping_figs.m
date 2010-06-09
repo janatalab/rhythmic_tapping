@@ -7,15 +7,16 @@
 % 7/5/09 ST - added coherence, von mises timing
 
 
-LOAD_DATA = 0;
+LOAD_DATA = 1;
 RUN_SUPPLEMENTARY_ANALYSES = 0;
 EXPORT_STIMDATA = 0;
+REMAP_STIM_IDS = 0;
 EXPORT_TRIALDATA = 0;
 COPY_STIMDATA_TO_TRIALDATA = 0;
 RUN_SUMMARY_ANALYSES = 0;
 SAVE_ANALYSES = 0;
 GEN_FIG_INDIV_TRIAL = 0;
-GEN_FIG_AVG_RATING = 1;
+GEN_FIG_AVG_RATING = 0;
 
 globals = rhythmTap_globals;
 
@@ -23,7 +24,22 @@ globals = rhythmTap_globals;
 
 % Load stimulus related information and metrics
 stim_rpProfile_fstub = ...
-    'rhythmTap_stimulus_rprofile_analysis_04-Mar-2010_19:17:52.mat';
+    'rhythmTap_stimulus_rprofile_analysis_27-Apr-2010_19:55:59.mat'; %not normalizing denv (testing original calc)
+%    'rhythmTap_stimulus_rprofile_analysis_07-May-2010_15:48:23.mat'; %calc_ani normalization is turned off
+%    'rhythmTap_stimulus_rprofile_analysis_07-May-2010_00:29:35.mat' %rms normalizedstims, wav files
+%    'rhythmTap_stimulus_rprofile_analysis_06-May-2010_16:36:38.mat';%rms normalized versions of stims, original logful calculation
+%    'rhythmTap_stimulus_rprofile_analysis_06-May-2010_14:03:48.mat';%rms normalized versions of stims, but setting denv to 1 for logful
+%     'rhythmTap_stimulus_rprofile_analysis_28-Apr-2010_21:16:55.mat';%contains rms of raw signal
+%    'rhythmTap_stimulus_rprofile_analysis_28-Apr-2010_21:33:40.mat';%contains max amp of signal
+%     'rhythmTap_stimulus_rprofile_analysis_28-Apr-2010_15:14:29.mat'; %has datawith mean(denv)
+%    'rhythmTap_stimulus_rprofile_analysis_28-Apr-2010_14:24:24.mat'; %setting denv to 1 (prediction still normalized)
+%     'rhythmTap_stimulus_rprofile_analysis_27-Apr-2010_18:29:28.mat';%norm denv by window. Norm prob by current max 
+%     'rhythmTap_stimulus_rprofile_analysis_26-Apr-2010_17:52:47.mat'; %norm by calc prediction values
+%   'rhythmTap_stimulus_rprofile_analysis_26-Apr-2010_15:46:46.mat'; %testing(should be sameas not-norm)
+%    'rhythmTap_stimulus_rprofile_analysis_23-Apr-2010_17:11:30.mat' %normalized
+%    'rhythmTap_stimulus_rprofile_analysis_22-Apr-2010_18:51:18.mat'; %not-normalized 
+%    'rhythmTap_stimulus_rprofile_analysis_04-Mar-2010_19:17:52.mat';
+%'rhythmTap_stimulus_rprofile_analysis_21-Apr-2010_17:48:10.mat';
 %    'rhythmTap_stimulus_rprofile_analysis_27July2007_11:30.mat';
 
 % File with post stim responses
@@ -144,6 +160,24 @@ if LOAD_DATA
   stim_st = an{5}.results;
   stimcols = set_var_col_const(stim_st.vars);
    
+  
+  %this is useful if having to remap the loaded stim IDs
+  %for example, in the circumstance that the stims were normalized
+  %and new stim IDs were assigned to the normalized versions
+  if(REMAP_STIM_IDS)
+    
+    %stimMapMtx contains a mapping of old stim ID to new stim ID
+    %It should have two columns. First column has original ID (the ID to map
+    %to). Second column has the newer ID (the ID to map from).
+    stimsToRemap = stim_st.data{stimcols.stimulus_id};
+    [tf,stimOrder] = ismember(stimsToRemap,stimMapMtx(:,2))
+    stim_st.data{stimcols.stimulus_id} = stimMapMtx(stimOrder,1);
+  end
+  
+  
+  
+  
+  
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % No need to perform the following code anymore
   % The summary measurements (meanMeanCoh, npeaks,etc) are returned by the
@@ -412,7 +446,7 @@ if(COPY_STIMDATA_TO_TRIALDATA)
   copy_vars = {'npeaks', 'complex_simple','mmCoh','mvCoh',...
 	      'vmCoh','vvCoh','mmPred','mvPred','vmPred',...
 	      'vvPred','mmTD','mvTD','vmTD','vvTD',...
-	      'mmLogFul','mvLogFul','vmLogFul','vvLogFul'};
+	      'mmLogFul','mvLogFul','vmLogFul','vvLogFul','sigRMS','maxAmp'};
  
   dest_vars = strcat(copy_vars,'_stim');
   
@@ -616,12 +650,17 @@ end % if GENERATE_FIGS
 
 
 if GEN_FIG_AVG_RATING
+  seven_point_qids = [207.01 493.01 494.01 498.01 505.01];
+  seven_point_mask = ismember([qinfo.compqid],seven_point_qids);
+  quest_subset = qinfo(seven_point_mask);
+  
+  %corrSMQParams.measures2plot = {'mmCoh_stim','mvCoh_stim',...
+%		   'vmCoh_stim','vvCoh_stim','mmPred_stim','mvPred_stim','vmPred_stim',...
+%		   'vvPred_stim','mmTD_stim','mvTD_stim','vmTD_stim','vvTD_stim',...
+%		   'mmLogFul_stim','mvLogFul_stim','vmLogFul_stim','vvLogFul_stim'};
   
   
-  corrSMQParams.measures2plot = {'mmCoh_stim','mvCoh_stim',...
-		   'vmCoh_stim','vvCoh_stim','mmPred_stim','mvPred_stim','vmPred_stim',...
-		   'vvPred_stim','mmTD_stim','mvTD_stim','vmTD_stim','vvTD_stim',...
-		   'mmLogFul_stim','mvLogFul_stim','vmLogFul_stim','vvLogFul_stim'};
+  corrSMQParams.measures2plot = {'maxAmp_stim','sigRMS_stim','mmLogFul_stim'};
   
   corrSMQParams.globalsFile = 'rhythmTap_globals';
     

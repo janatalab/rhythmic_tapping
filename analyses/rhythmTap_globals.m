@@ -383,6 +383,9 @@ globals.stimIPEMParams.rp =  rp_paramGroups_v2('param_group',...
 				   'reson_filterQSpacing_periodBasedDecay',...
 				   'input_type','ani','gain_type','beta_distribution');
 
+%added 4/21/2010. Normalizing denv so that denv energy doesn't
+%affect correlations between groove ratings and timing measurements
+globals.stimIPEMParams.rp.perform.normalize.denv = 0;
 
 % added 2/22/2010 S.T.
 % set parameters to calculate complex reson output,

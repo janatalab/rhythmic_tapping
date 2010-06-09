@@ -12,9 +12,9 @@ SAVE_ANALYSES = 1;
 
 globals = rhythmTap_globals; 
 
-if(~exist('an','var'))
-  load(fullfile(globals.paths.datapath,'rhythmTap_stimulus_rprofile_analysis_18July2007_00:41.mat'),'an');
-end
+%if(~exist('an','var'))
+%  load(fullfile(globals.paths.datapath,'rhythmTap_stimulus_rprofile_analysis_18July2007_00:41.mat'),'an');
+%end
 
 %store form defs in a more easily accessed variable
 form_defs = globals.ensemble.form_defs;
@@ -28,9 +28,10 @@ na=na+1;
 an{na}.name = 'ensemble_load_expinfo';
 an{na}.fun  = @ensemble_load_expinfo;
 an{na}.params.ensemble.experiment_title='rhythmic_tapping_v2';
+%an{na}.params.ensemble.experiment_title='rhythmic_tapping_normalization';
 an{na}.params.ensemble.remove_incomplete_sessions = 1;
 an{na}.params.filt = globals.ensemble.filt;
-an{na}.params.filt.include.all.stimulus_id = [1933]; %[5410];
+%an{na}.params.filt.include.all.stimulus_id = [1933]; %[5410];
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 
 %an{2}
@@ -48,6 +49,7 @@ na=na+1;
 an{na}.name = 'session_x_trial_info';
 an{na}.fun  = @ensemble_session_trial_info;
 an{na}.params.verbose = 1;
+%{
 an{na}.params.parse_audio_stims.clip_pad_sec = 0;
 an{na}.params.parse_audio_stims.detect_cues = 1;
 an{na}.params.parse_audio_stims.throw_out_bad_cues = 0;
@@ -59,7 +61,8 @@ an{na}.params.parse_audio_stims.mysql_conn_id = globals.ensemble.conn_id;
 an{na}.params.parse_audio_stims.path = globals.paths.stim_recording_path;
 an{na}.params.parse_audio_stims.filename = 'stim_rec_<subject_id>_<session_id>.L.wav';
 an{na}.params.parse_midi_resps.filename = 'midi_resp_<subject_id>_<session_id>.mid';
-an{na}.params.parse_midi_resps.path = globals.paths.resp_midi_path;		    
+an{na}.params.parse_midi_resps.path = globals.paths.resp_midi_path;
+%}
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars', ...
 			  'response_data'),struct('name','ensemble_load_expinfo','vars','session_info')};
 %an{4}	
@@ -112,12 +115,15 @@ na=na+1;
 an{na}.name = 'get_stim_summaryMeasurements';
 an{na}.fun = @get_stim_summaryMeasurements;
 an{na}.params.ipem = globals.stimIPEMParams;
+an{na}.params.ipem.glob.force_recalc = {'rp'};
+%an{na}.params.ipem.ani.normalize_wav = 0;
 an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.params.stimAttributes.filt.include.all.name = {'real_music_low_groove','real_music_mid_groove','real_music_high_groove'};
 an{na}.params.stimAttributes.filt.exclude.any.stimulus_id = globals.ensemble.silence_stim_id;
 an{na}.params.getTrialsParams.plotTappingConditions = {'iso_tap','free_form_tap'};
 an{na}.params.stims.filt.exclude.any.stimulus_id = globals.ensemble.silence_stim_id;
-an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
+an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata')};
+		   %,struct('name','session_x_trial_info')};
 
 %an{6}
 na=na+1;
@@ -147,7 +153,7 @@ an{na}.params.funcParams.plot.savePlot = 1;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','stimulus_metadata'),struct('name','ensemble_load_expinfo','vars','stimulus_x_attribute_metadata'),struct('name','session_x_trial_info')};
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [1 5];
 an = ensemble_jobman(an,params);
 
 if(SAVE_ANALYSES)
