@@ -6,8 +6,8 @@
 % 02/14/09 PJ - updated for SMPC09 abstract analyses
 % 7/5/09 ST - added coherence, von mises timing
 
-
-LOAD_DATA = 1;
+%% Control variables and globals
+LOAD_DATA = 0;
 RUN_SUPPLEMENTARY_ANALYSES = 0;
 EXPORT_STIMDATA = 0;
 REMAP_STIM_IDS = 0;
@@ -15,6 +15,7 @@ EXPORT_TRIALDATA = 0;
 COPY_STIMDATA_TO_TRIALDATA = 0;
 RUN_SUMMARY_ANALYSES = 0;
 SAVE_ANALYSES = 0;
+PLOT_POSTSTIM_SUMMARY = 1;
 GEN_FIG_INDIV_TRIAL = 0;
 GEN_FIG_AVG_RATING = 0;
 
@@ -64,7 +65,9 @@ analysis_types.group = {'nanmean','nanstd','nsub'};
 
 vars2analyze = {'tapping_var_about_peak','rp_entropy'};
 vars2analyze = {'numPeaks'};
+vars2analyze = {};
 
+%% Load data
 if LOAD_DATA
   % Load tapping data and responses to post-stim questions
   datafstub = subject_grooveEnum_fstub;
@@ -231,6 +234,7 @@ if LOAD_DATA
   
 end % if LOAD_DATA
 
+%% Run supplementary analyses
 if RUN_SUPPLEMENTARY_ANALYSES
   % Calculate any other desired measures on the trial data
   curr_var = 'rp_entropy';
@@ -284,7 +288,7 @@ if RUN_SUPPLEMENTARY_ANALYSES
   
 end % if RUN_SUPPLEMENTARY_ANALYSES
 
-%
+%% Retrieve question info
 % Retrieve information about the questions that were encountered
 %
 
@@ -303,10 +307,11 @@ end
 
 % Extract the question metadata
 qinfo = mysql_extract_metadata('table','question', ...
-    'question_id',unique(fix(qidlist)));
+    'question_id',unique(fix(qidlist)), 'conn_id', globals.ensemble.conn_id);
 [qmask,qinfo_loc] = ismember(qidlist,[qinfo.compqid]);
 qinfo = qinfo(qinfo_loc);
 
+%% Export stimdata
 if EXPORT_STIMDATA
   clear export_st
   
@@ -337,6 +342,7 @@ if EXPORT_STIMDATA
 
 end % if EXPORT_STIMDATA
 
+%% Export trialdata
 % Export trial data to a text file that we can send to a SAS analysis
 if EXPORT_TRIALDATA
   clear export_st
@@ -365,7 +371,7 @@ if EXPORT_TRIALDATA
   % Replace question ID variables with something a bit more readable
   groove_quest_labels = fieldnames(globals.groove_question_ids);
   groove_quest_labels(1) = [];  % remove all field
-  
+
   % Figure out which original question variable matches the appropriate
   % output variable
   [quest_mask,quest_idxs] = ismember(output_vars,question_vars);
@@ -483,7 +489,7 @@ if(COPY_STIMDATA_TO_TRIALDATA)
   
 end
 
-
+%% Run summary analyses
 
 % Get the number of stimulus categories
 stimcats = unique(resp_st.data{respcols.stimulus_category});
@@ -593,32 +599,46 @@ if RUN_SUMMARY_ANALYSES
     end % for icond=
   end % for icat=
  
+  % Copy the variables that let one orient into the summary matrices into the
+  % summary struct
+  summary.globals = globals; % global parameters
+  summary.stimcats = stimcats; % rows
+  summary.tapconds = tapconds; % columns
+  summary.vars = vars2analyze; % actual variables analyzed
+  
   if SAVE_ANALYSES
     analfstub = sprintf('rhythmTap_tapping_summary_%s.mat', datestr(now,30));
     analfname = fullfile(globals.paths.datapath, analfstub);
     fprintf('Saving data to: %s\n', analfname);
-    save_vars = {'summary','globals','stimcats','tapconds'};
+    save_vars = {'summary'};
     save(analfname, save_vars{:})
   end
 end % if RUN_SUMMARY_ANALYSES
  
-if GEN_FIG_INDIV_TRIAL
-  nstimcats = length(stimcats);
-  ntapconds = length(tapconds);
-  
-  groove_plot_order = {'high_groove','mid_groove','low_groove','silence'};
-  
-  seven_point_qids = [207.01 493.01 494.01 498.01 505.01];
-  seven_point_mask = ismember([qinfo.compqid],seven_point_qids);
+%% Plotting routines
+%
+
+% General definitions
+nstimcats = length(stimcats);
+ntapconds = length(tapconds);
+
+groove_plot_order = {'high_groove','mid_groove','low_groove','silence'};
+
+seven_point_qids = [207.01 493.01 494.01 498.01 505.01];
+seven_point_mask = ismember([qinfo.compqid],seven_point_qids);
+
+if PLOT_POSTSTIM_SUMMARY
   quest_subset = qinfo(seven_point_mask);
   nquest = length(quest_subset);
-
-  %
-  % Generate figure showing the average responses to the poststim questions
-  %
-  %figure(1),clf
-%  poststim_question_fig;
   
+  poststim_question_fig;
+end
+
+if GEN_FIG_INDIV_TRIAL
+   quest_subset = qinfo(seven_point_mask);
+  nquest = length(quest_subset);
+
+   
   %measures2plot = {'tapping_var_about_peak','rp_entropy'};
   %measures2plot = {'numPeaks'};
   measures2plot = {'mmCoh_stim','mmPred_stim','mmTD_stim'};

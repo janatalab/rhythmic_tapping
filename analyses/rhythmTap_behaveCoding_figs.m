@@ -31,7 +31,6 @@ analysis_types.subject = {'sum_prop', ... % sum the proportion of time per stim
 analysis_types.group = {'nanmean','nanstd','nsub'};
 
 if LOAD_DATA
-  %datafstub = 'rhythmTap_behaveCodingAnalysis_9-May-2007_22:04.mat';
   datafstub = 'rhythmTap_behaveCodingAnalysis_6Aug2009.mat';
   datafname = fullfile(globals.paths.datapath, datafstub);
 
