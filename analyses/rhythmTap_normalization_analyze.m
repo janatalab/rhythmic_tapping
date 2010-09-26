@@ -40,8 +40,6 @@ an{na}.fun = @ensemble_filter;
 an{na}.params.include.all.norm_level = {'normalizedHigh'};
 an{na}.requires = {struct('name','parse_loudness_and_grooveLevel')};
 
-
-
 %run rhythm profiler
 na=na+1;
 an{na}.name = 'rhythm_profiler';
@@ -52,10 +50,11 @@ an{na}.requires = {struct('name','filter normalized high')};
 
 %correlate timing with tempo
 na=na+1;
-an{na}.name=
+an{na}.name= 
 an{na}.fun = 
 an{na}.params = 
 an{na}.requires = 
+
 
 params.ensemble.conn_id = 7;
 params.run_analyses = [5];
