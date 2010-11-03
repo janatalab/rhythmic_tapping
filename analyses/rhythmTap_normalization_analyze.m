@@ -1,5 +1,13 @@
 %analysis list for rhythmic tapping
+%
+% Note that svn/private/matlab/projects/rhythmic_tapping/utils has to be on
+% the path
 
+% 24Sep2010 - PJ - picking up where script was left off
+
+if isempty(which('parse_loudness_and_grooveLevel'))
+  addpath('../utils')
+end
 
 globals = rhythmTap_globals; 
 
@@ -40,6 +48,8 @@ an{na}.fun = @ensemble_filter;
 an{na}.params.include.all.norm_level = {'normalizedHigh'};
 an{na}.requires = {struct('name','parse_loudness_and_grooveLevel')};
 
+
+
 %run rhythm profiler
 na=na+1;
 an{na}.name = 'rhythm_profiler';
@@ -49,14 +59,8 @@ an{na}.params.ensemble.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','filter normalized high')};
 
 %correlate timing with tempo
-na=na+1;
-an{na}.name= 
-an{na}.fun = 
-an{na}.params = 
-an{na}.requires = 
-
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [5];
+params.run_analyses = [3];
 an = ensemble_jobman(an,params);
 return

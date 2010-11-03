@@ -279,9 +279,12 @@ for iStim = 1:length(stimIDs)
     
   if(params.savePlot)
     if(confirmOverwrite)
+      try fileType = params.fileType; catch fileType = 'png'; end
+      try fileArgs = params.fileArgs; catch fileArgs = {}; end
       %painters mode seems to mess up the colors used by jbfill method of
-      %plotting stdev
-      print(plotFname,'-dpng','-append');
+      %plotting stdev.  However, if the file is saved out in painters mode, 
+      % the opacity of each fill can then be tweaked in Adobe Illustrator
+      print(plotFname,sprintf('-d%s', fileType), fileArgs{:});
     end
     delete(figh);
   end
