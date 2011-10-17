@@ -40,6 +40,11 @@ an{na}.fun = @ensemble_export_respnstim;
 an{na}.params.export.by_stimulus.stimulus_x_attribute_metadata.vars = {'stimulus_id','name','groove_level','norm_level'};
 an{na}.params.write2file = 1;
 an{na}.params.fname = fullfile(globals.paths.datapath,'rhythmic_tapping_normalization_responses.txt');
+an{na}.params.export.var_name_map.s207_01 = 'enjoyed_music';
+an{na}.params.export.var_name_map.s493_01 = 'music_grooved';
+an{na}.params.export.var_name_map.s505_01 = 'continue_task';
+an{na}.params.export.var_name_map.s506_01 = 'familiar';
+an{na}.params.export.var_name_map.s911_01 = 'felt_in_groove';
 an{na}.params.mysql.conn_id = globals.ensemble.conn_id;
 an{na}.requires = {struct('name','ensemble_load_expinfo','vars','response_data'),...
 		   struct('name','parse_loudness_and_grooveLevel'),...
