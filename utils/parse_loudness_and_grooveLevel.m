@@ -4,7 +4,12 @@ function inData = parse_loudness_and_grooveLevel(inData,params)
 % experiment and returns columns for normalization level, and groove level
 %
 % S.T. 6/10/2010
-  
+% 28Dec2013 PJ - added filtering abilities
+
+if isfield(params,'filt')
+  inData = ensemble_filter(inData,params.filt);
+end
+
 inData.vars = {inData.vars{:} 'groove_level' 'norm_level'};
 inData.data = {inData.data{:} {} {} };
 inDataCols = set_var_col_const(inData.vars);
