@@ -8,13 +8,18 @@ function defs = rhythmicTap_normalization_globals
 project_root = '/data2/rhythm/rhythmic_tapping_v2'; check_dir(project_root);
 defs.paths.analyses = fullfile(project_root,'analyses'); check_dir(defs.paths.analyses);
 defs.paths.datapath = fullfile(project_root, 'project_data'); check_dir(defs.paths.datapath);
+defs.paths.stimuli = fullfile(project_root, 'stimuli'); check_dir(defs.paths.stimuli);
+defs.paths.stimroot = '/nfs/stimuli';
 
-% Ensemble info
+% Mysql info
 defs.mysql.host = 'atonal.ucdavis.edu';
 defs.mysql.database = 'ensemble_main';
 defs.mysql.conn_id = 7;
 defs.mysql.login_type = 'researcher';
 defs.mysql = mysql_login(defs.mysql);
+
+% Ensemble info
+defs.ensemble.experiment_title = 'rhythmic_tapping_normalization';
 
 % Filtering
 defs.ensemble.filt.exclude.any.subject_id = {'tmp_*', '01fmt54011', ...
