@@ -11,7 +11,7 @@ defs = rhythmicTap_normalization_globals;
 conn_id = mysql_make_conn(defs.mysql);
 
 % Only export the -6 dB stimuli
-filt_st.include.all.name = '\(-6 dB\)$';
+filt_st.include.all.name = {'\(-6 dB\)$'};
 
 % Copy the stimuli
 ensemble_copy_stimuli2dir('conn_id', conn_id, ...
