@@ -8,7 +8,7 @@
 %                collaboration with Michael Hove
 
 SUMMARIZE_SUBS_AND_STIMS = 0;
-REPORT_AVERAGE_GROOVE_RATING = 1;
+REPORT_AVERAGE_GROOVE_RATING = 0;
 avgGrooveRatingFile = 'rhythmic_tapping_normalization_mean_goove_rating.txt';
 
 if isempty(which('parse_loudness_and_grooveLevel'))
@@ -83,7 +83,7 @@ an{na}.requires = {struct('name','filter normalized high')};
 %correlate timing with tempo
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [];
+params.run_analyses = [1];
 an = ensemble_jobman(an,params);
 
 if SUMMARIZE_SUBS_AND_STIMS
