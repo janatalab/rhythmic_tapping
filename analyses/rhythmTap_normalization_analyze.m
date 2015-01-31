@@ -80,10 +80,28 @@ end
 an{na}.params.mysql = globals.mysql;
 an{na}.requires = {struct('name','filter normalized high')};
 
+% Get information on whether people had a definition of groove
+na = na+1;
+an{na}.name = 'groove_definition';
+an{na}.fun = @ensemble_enum_hist;
+an{na}.params = [];
+an{na}.params.mysql = globals.mysql;
+an{na}.params.filt.include.all.form_id = form_defs.DEFINE_GROOVE;
+an{na}.requires = {struct('name','ensemble_load_expinfo','vars','response_data')};
+
+na = na+1;
+an{na}.name = 'groove_definition_written';
+an{na}.fun = @ensemble_report_written;
+an{na}.params = [];
+an{na}.params.mysql = globals.mysql;
+an{na}.params.filt.include.all.form_id = form_defs.DEFINE_GROOVE;
+an{na}.requires = {struct('name','ensemble_load_expinfo','vars','response_data')};
+
+
 %correlate timing with tempo
 
 params.ensemble.conn_id = 7;
-params.run_analyses = [1];
+params.run_analyses = [];
 an = ensemble_jobman(an,params);
 
 if SUMMARIZE_SUBS_AND_STIMS
